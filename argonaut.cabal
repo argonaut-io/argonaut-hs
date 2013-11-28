@@ -1,0 +1,60 @@
+name:            argonaut
+version:            0.1
+license:            BSD3
+category:           Text, JSON
+copyright:          (c) 2013 Sean Parsons
+                    (c) 2013 Mark Hibberd
+                    (c) 2013 Tony Morris
+author:             Sean Parsons
+                    Mark Hibberd
+                    Tony Morris
+maintainer:         Sean Parsons
+                    Mark Hibberd
+                    Tony Morris
+stability:          experimental
+synopsis:           Fast and powerful JSON manipulation
+cabal-version:      >= 1.18
+homepage:           https://github.com/argonaut-io/argonaut-hs
+bug-reports:        https://github.com/argonaut-io/argonaut-hs/issues
+build-type:         Simple
+description:        JSON library of justice.
+                 
+extra-source-files:
+    README.md
+    benchmark/*.cabal
+    benchmark/*.hs
+    benchmark/json-data/*.json
+
+library
+  build-depends:        base == 4.*,
+                        unordered-containers >= 0.2.2.3,
+                        vector >= 0.10.9.1,
+                        text >= 0.11.3.1,
+                        lens >= 3.10
+  hs-source-dirs:       src/
+  exposed-modules:      Data.Argonaut
+  default-language:     Haskell2010
+  default-extensions:   TemplateHaskell
+
+benchmark bench
+  type:                 exitcode-stdio-1.0
+  hs-source-dirs:       src/,
+                        benchmark/
+  default-language:     Haskell2010
+  main-is:              Benchmark.hs
+  build-depends:        base >= 4 && < 5,
+                        criterion >= 0.8.0.0,
+                        argonaut
+
+test-suite tests
+  type:                 exitcode-stdio-1.0
+  hs-source-dirs:       src/,
+                        test/
+  default-language:     Haskell2010
+  main-is:              Spec.hs
+--  ghc-options:     -v
+  build-depends:        base == 4.*,                  
+                        QuickCheck,
+                        hspec
+
+
