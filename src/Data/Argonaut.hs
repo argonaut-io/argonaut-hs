@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, OverloadedStrings #-}
 
 module Data.Argonaut
   (
@@ -23,21 +23,41 @@ module Data.Argonaut
     , fromArray
     , toObject
     , fromObject
-    , jBoolP
-    , jNumberL
+    , boolL
+    , numberL
+    , arrayL
+    , objectL
+    , stringL
+    , nullL
+    , fromDoubleToNumberOrNull
+    , fromDoubleToNumberOrString
+    , true
+    , false
+    , zero
+    , emptyString
+    , emptyArray
+    , singleItemArray
+    , emptyObject
+    , singleItemObject
+    , objectFromFoldable
+    , arrayFromFoldable
   ) where
 
 import Control.Lens
 import Control.Monad()
 import Control.Applicative()
+import Data.Foldable
+import Data.Maybe
 import Data.Text(Text,unpack,pack)
 import Data.Typeable(Typeable)
-import Data.Vector(Vector)
-import Data.HashMap.Strict(HashMap)
+import qualified Data.Vector as V
+import qualified Data.HashMap.Strict as M
 
-type JObject = HashMap Text Json
+type JField = Text
 
-type JArray = Vector Json
+type JObject = M.HashMap JField Json
+
+type JArray = V.Vector Json
 
 data Json = JsonObject !JObject
           | JsonArray !JArray
@@ -55,80 +75,136 @@ foldJson _ _ jsonNumber _ _ _ (JsonNumber value) = jsonNumber value
 foldJson _ jsonBool _ _ _ _ (JsonBool value) = jsonBool value
 foldJson jsonNull _ _ _ _ _ (JsonNull) = jsonNull
 
-isNull :: Json => Bool
+isNull :: Json -> Bool
 isNull JsonNull = True
 isNull _ = False
 
-isTrue :: Json => Bool
+isTrue :: Json -> Bool
 isTrue (JsonBool True) = True
 isTrue _ = False
 
-isFalse :: Json => Bool
+isFalse :: Json -> Bool
 isFalse (JsonBool False) = True
 isFalse _ = False
 
-isNumber :: Json => Bool
+isNumber :: Json -> Bool
 isNumber (JsonNumber _) = True
 isNumber _ = False
 
-isString :: Json => Bool
+isString :: Json -> Bool
 isString (JsonString _) = True
 isString _ = False
 
-isArray :: Json => Bool
+isArray :: Json -> Bool
 isArray (JsonArray _) = True
 isArray _ = False
 
-isObject :: Json => Bool
+isObject :: Json -> Bool
 isObject (JsonObject _) = True
 isObject _ = False
 
-toBool :: Json => Maybe Bool
+toBool :: Json -> Maybe Bool
 toBool (JsonBool bool) = Just bool
 toBool _ = Nothing
 
-fromBool :: Bool => Json
+fromBool :: Bool -> Json
 fromBool = JsonBool
 
-toText :: Json => Maybe Text
+toText :: Json -> Maybe Text
 toText (JsonString text) = Just text
 toText _ = Nothing
 
-fromText :: Text => Json
+fromText :: Text -> Json
 fromText = JsonString
 
-toString :: Json => Maybe String
+toString :: Json -> Maybe String
 toString (JsonString text) = Just (unpack text)
 toString _ = Nothing
 
-fromString :: String => Json
+fromString :: String -> Json
 fromString string = JsonString (pack string)
 
-toDouble :: Json => Maybe Double
+toDouble :: Json -> Maybe Double
 toDouble (JsonNumber double) = Just double
 toDouble _ = Nothing
 
-fromDouble :: Double => Maybe Json
+fromDouble :: Double -> Maybe Json
 fromDouble double | isNaN double      = Nothing
                   | isInfinite double = Nothing
                   | otherwise         = Just (JsonNumber double)
 
-toArray :: Json => Maybe JArray
+toArray :: Json -> Maybe JArray
 toArray (JsonArray array) = Just array
 toArray _ = Nothing
 
-fromArray :: JArray => Json
+fromArray :: JArray -> Json
 fromArray = JsonArray
 
-toObject :: Json => Maybe JObject
+toObject :: Json -> Maybe JObject
 toObject (JsonObject object) = Just object
 toObject _ = Nothing
 
-fromObject :: JObject => Json
+fromObject :: JObject -> Json
 fromObject = JsonObject
 
-jBoolP :: Prism' Json Bool
-jBoolP = prism' fromBool toBool
+toUnit :: Json -> Maybe ()
+toUnit JsonNull = Just ()
+toUnit _ = Nothing
 
-jNumberL :: Lens Json (Maybe Json) (Maybe Double) Double
-jNumberL = lens toDouble (const fromDouble)
+fromUnit :: () -> Json
+fromUnit _ = JsonNull
+
+boolL :: Prism' Json Bool
+boolL = prism' fromBool toBool
+
+numberL :: Lens Json (Maybe Json) (Maybe Double) Double
+numberL = lens toDouble (const fromDouble)
+
+arrayL :: Prism' Json JArray
+arrayL = prism' fromArray toArray
+
+objectL :: Prism' Json JObject
+objectL = prism' fromObject toObject
+
+stringL :: Prism' Json Text
+stringL = prism' fromText toText
+
+nullL :: Prism' Json ()
+nullL = prism' fromUnit toUnit
+
+fromDoubleToNumberOrNull :: Double -> Json
+fromDoubleToNumberOrNull = fromMaybe JsonNull . fromDouble
+
+fromDoubleToNumberOrString :: Double -> Json
+fromDoubleToNumberOrString double = fromMaybe (fromString $ show double) (fromDouble double)
+
+true :: Json
+true = JsonBool True
+
+false :: Json
+false = JsonBool False
+
+zero :: Json
+zero = JsonNumber 0
+
+emptyString :: Json
+emptyString = JsonString ""
+
+emptyArray :: Json
+emptyArray = JsonArray V.empty
+
+singleItemArray :: Json -> Json
+singleItemArray = JsonArray . V.singleton
+
+emptyObject :: Json
+emptyObject = JsonObject (M.empty)
+
+singleItemObject :: JField -> Json -> Json
+singleItemObject field json = JsonObject (M.singleton field json)
+
+objectFromFoldable :: Foldable f => f (JField, Json) -> Json
+objectFromFoldable = JsonObject . foldMap (uncurry M.singleton)
+
+arrayFromFoldable :: Foldable f => f Json -> Json
+arrayFromFoldable = JsonArray . foldMap V.singleton
+

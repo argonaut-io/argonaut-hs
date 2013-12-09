@@ -3,4 +3,5 @@ argonaut.cabal.lkshs
 argonaut.cabal.lkshw
 cabal.sandbox.config
 dist
-
+argonaut.lkshs
+argonaut.lkshw
