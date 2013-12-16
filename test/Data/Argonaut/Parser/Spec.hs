@@ -2,7 +2,6 @@
 
 module Data.Argonaut.Parser.Spec where
 
-import Debug.Trace
 import Control.Monad
 import Data.Argonaut
 import Data.Argonaut.Parser
@@ -28,7 +27,5 @@ spec = do
       property $ \originalJson ->
         let
           asString = show originalJson
-          _ = trace asString
-          _ = trace "Testing!"
           parsedJson = parseString asString
         in parsedJson `shouldBe` (Right originalJson)
