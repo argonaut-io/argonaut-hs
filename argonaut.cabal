@@ -24,9 +24,12 @@ extra-source-files: README.md benchmark/*.cabal benchmark/*.hs
                     benchmark/json-data/*.json
 
 library
-    build-depends: base ==4.*, unordered-containers >=0.2.2.3,
-                   vector >=0.10.9.1, text >=0.11.3.1, lens >=3.10, mtl >=2.1.2,
-                   hxt-unicode >=9.0.2.1
+    build-depends:                  base ==4.*,
+                                    unordered-containers >=0.2.2.3,
+                                    vector >=0.10.9.1,
+                                    text >=0.11.3.1,
+                                    lens >=3.10,
+                                    mtl >=2.1.2
     exposed-modules: Data.Argonaut
                      Data.Argonaut.Parser
     exposed: True
@@ -36,7 +39,14 @@ library
     hs-source-dirs: src/
 
 test-suite tests
-    build-depends: base ==4.*, QuickCheck -any, hspec -any
+    build-depends:                  base ==4.*,
+                                    unordered-containers >=0.2.2.3,
+                                    vector >=0.10.9.1,
+                                    text >=0.11.3.1,
+                                    lens >=3.10,
+                                    mtl >=2.1.2,
+                                    QuickCheck -any,
+                                    hspec -any
     type: exitcode-stdio-1.0
     main-is: Spec.hs
     buildable: True

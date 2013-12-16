@@ -52,11 +52,13 @@ import Control.Monad()
 import Control.Applicative()
 import Data.Foldable
 import Data.Maybe
+import qualified Data.Char as C
 import qualified Data.List as L
 import Data.Text(Text,unpack,pack)
 import Data.Typeable(Typeable)
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M
+import Text.Printf
 
 type JField = String
 
@@ -73,20 +75,44 @@ data Json = JsonObject !JObject
           deriving (Eq, Typeable)
 
 instance Show Json where
-  show (JsonObject fields) = ('{' : (L.concat $ L.intersperse "," $ fmap (\(key, value) -> (show key) ++ (':' : (show value))) $ M.toList fields)) ++ "}"
-  show (JsonArray entries) = ('[' : (L.concat $ L.intersperse "," $ fmap show $ toList entries)) ++ "]"
-  show (JsonString string) = show string
-  show (JsonNumber number) = show number
-  show (JsonBool bool) = show bool
-  show JsonNull = "null"
+  show (JsonObject fields)  = ('{' : (L.concat $ L.intersperse "," $ fmap (\(key, value) -> (show key) ++ (':' : (show value))) $ M.toList fields)) ++ "}"
+  show (JsonArray entries)  = ('[' : (L.concat $ L.intersperse "," $ fmap show $ toList entries)) ++ "]"
+  show (JsonString string)  = '"' : (L.foldr escapeAndPrependChar "\"" string)
+  show (JsonNumber number)  = show number
+  show (JsonBool bool)      = if bool then "true" else "false"
+  show JsonNull             = "null"
+
+escapeAndPrependChar :: Char -> String -> String
+escapeAndPrependChar '\r' string  = '\\' : 'r' : string
+escapeAndPrependChar '\n' string  = '\\' : 'n' : string
+escapeAndPrependChar '\t' string  = '\\' : 't' : string
+escapeAndPrependChar '\b' string  = '\\' : 'b' : string
+escapeAndPrependChar '\f' string  = '\\' : 'f' : string
+escapeAndPrependChar '\\' string  = '\\' : '\\' : string
+escapeAndPrependChar '/' string   = '\\' : '/' : string
+escapeAndPrependChar '"' string   = '\\' : '"' : string
+escapeAndPrependChar char string
+    | requiresEscaping  = (printf "\\u04%x" $ fromEnum char) ++ string
+    | otherwise         = char : string
+  where
+    requiresEscaping    = char < '\x20'
+
+collectStringParts ('\\' : 'r' : remainder) workingString   = collectStringParts remainder ('\r' : workingString)
+collectStringParts ('\\' : 'n' : remainder) workingString   = collectStringParts remainder ('\n' : workingString)
+collectStringParts ('\\' : 't' : remainder) workingString   = collectStringParts remainder ('\t' : workingString)
+collectStringParts ('\\' : 'b' : remainder) workingString   = collectStringParts remainder ('\b' : workingString)
+collectStringParts ('\\' : 'f' : remainder) workingString   = collectStringParts remainder ('\f' : workingString)
+collectStringParts ('\\' : '\\' : remainder) workingString  = collectStringParts remainder ('\\' : workingString)
+collectStringParts ('\\' : '/' : remainder) workingString   = collectStringParts remainder ('/' : workingString)
+collectStringParts ('\\' : '"' : remainder) workingString   = collectStringParts remainder ('"' : workingString)
 
 foldJson :: a -> (Bool -> a) -> (Double -> a) -> (String -> a) -> (JArray -> a) -> (JObject -> a) -> Json -> a
-foldJson _ _ _ _ _ jsonObject (JsonObject value) = jsonObject value
-foldJson _ _ _ _ jsonArray _ (JsonArray value) = jsonArray value
-foldJson _ _ _ jsonString _ _ (JsonString value) = jsonString value
-foldJson _ _ jsonNumber _ _ _ (JsonNumber value) = jsonNumber value
-foldJson _ jsonBool _ _ _ _ (JsonBool value) = jsonBool value
-foldJson jsonNull _ _ _ _ _ (JsonNull) = jsonNull
+foldJson _ _ _ _ _ jsonObject (JsonObject value)  = jsonObject value
+foldJson _ _ _ _ jsonArray _ (JsonArray value)    = jsonArray value
+foldJson _ _ _ jsonString _ _ (JsonString value)  = jsonString value
+foldJson _ _ jsonNumber _ _ _ (JsonNumber value)  = jsonNumber value
+foldJson _ jsonBool _ _ _ _ (JsonBool value)      = jsonBool value
+foldJson jsonNull _ _ _ _ _ (JsonNull)            = jsonNull
 
 isNull :: Json -> Bool
 isNull JsonNull = True
@@ -223,4 +249,3 @@ objectFromFoldable = JsonObject . foldMap (uncurry M.singleton)
 
 arrayFromFoldable :: Foldable f => f Json -> Json
 arrayFromFoldable = JsonArray . foldMap V.singleton
-

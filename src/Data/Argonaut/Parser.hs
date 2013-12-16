@@ -84,7 +84,7 @@ expectObject first fields text =
 
 expectArray :: Bool -> V.Vector Json -> String -> EitherStringParseResult (String, Json)
 expectArray _ _ [] = Left $ UnexpectedTermination
-expectArray _ entries ('}' : remainder) = Right (remainder, fromArray entries)
+expectArray _ entries (']' : remainder) = Right (remainder, fromArray entries)
 expectArray first entries (' ' : remainder) = expectArray first entries remainder
 expectArray first entries ('\r' : remainder) = expectArray first entries remainder
 expectArray first entries ('\t' : remainder) = expectArray first entries remainder
@@ -136,7 +136,7 @@ collectStringParts ('\\' : 'f' : remainder) workingString = collectStringParts r
 collectStringParts ('\\' : '\\' : remainder) workingString = collectStringParts remainder ('\\' : workingString)
 collectStringParts ('\\' : '/' : remainder) workingString = collectStringParts remainder ('/' : workingString)
 collectStringParts ('\\' : '"' : remainder) workingString = collectStringParts remainder ('"' : workingString)
-collectStringParts ('\\' : remainder) _ =  Left (InvalidEscapeSequence ('\\' : remainder))
+collectStringParts ('\\' : remainder) _ = Left (InvalidEscapeSequence ('\\' : remainder))
 collectStringParts (char : remainder) workingString = collectStringParts remainder (char : workingString)
 
 isNumberChar :: Char -> Bool
