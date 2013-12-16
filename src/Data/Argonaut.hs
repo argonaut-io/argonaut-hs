@@ -13,8 +13,6 @@ module Data.Argonaut
     , isObject
     , toBool
     , fromBool
-    , toText
-    , fromText
     , toString
     , fromString
     , toDouble
@@ -54,7 +52,6 @@ import Data.Foldable
 import Data.Maybe
 import qualified Data.Char as C
 import qualified Data.List as L
-import Data.Text(Text,unpack,pack)
 import Data.Typeable(Typeable)
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M
@@ -149,13 +146,6 @@ toBool _ = Nothing
 fromBool :: Bool -> Json
 fromBool = JsonBool
 
-toText :: Json -> Maybe Text
-toText (JsonString text) = Just (pack text)
-toText _ = Nothing
-
-fromText :: Text -> Json
-fromText text = JsonString (unpack text)
-
 toString :: Json -> Maybe String
 toString (JsonString text) = Just text
 toString _ = Nothing
@@ -205,8 +195,8 @@ arrayL = prism' fromArray toArray
 objectL :: Prism' Json JObject
 objectL = prism' fromObject toObject
 
-stringL :: Prism' Json Text
-stringL = prism' fromText toText
+stringL :: Prism' Json String
+stringL = prism' fromString toString
 
 nullL :: Prism' Json ()
 nullL = prism' fromUnit toUnit

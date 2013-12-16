@@ -14,7 +14,6 @@ import Data.Argonaut
 import Control.Monad.Identity
 import Text.Read
 import Data.Typeable(Typeable)
-import qualified Data.Text as T
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M
 
