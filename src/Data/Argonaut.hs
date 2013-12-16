@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, OverloadedStrings #-}
+{-# LANGUAGE DeriveDataTypeable, OverloadedStrings, BangPatterns #-}
 
 module Data.Argonaut
   (
@@ -72,36 +72,30 @@ data Json = JsonObject !JObject
           deriving (Eq, Typeable)
 
 instance Show Json where
-  show (JsonObject fields)  = ('{' : (L.concat $ L.intersperse "," $ fmap (\(key, value) -> (show key) ++ (':' : (show value))) $ M.toList fields)) ++ "}"
-  show (JsonArray entries)  = ('[' : (L.concat $ L.intersperse "," $ fmap show $ toList entries)) ++ "]"
-  show (JsonString string)  = '"' : (L.foldr escapeAndPrependChar "\"" string)
-  show (JsonNumber number)  = show number
-  show (JsonBool bool)      = if bool then "true" else "false"
+  show (JsonObject !fields) = ('{' : (L.concat $ L.intersperse "," $ fmap (\(!key, !value) -> (jsonStringShow key) ++ (':' : (show value))) $ M.toList fields)) ++ "}"
+  show (JsonArray !entries) = ('[' : (L.concat $ L.intersperse "," $ fmap show $ toList entries)) ++ "]"
+  show (JsonString !string) = jsonStringShow string
+  show (JsonNumber !number) = show number
+  show (JsonBool !bool)     = if bool then "true" else "false"
   show JsonNull             = "null"
 
-escapeAndPrependChar :: Char -> String -> String
-escapeAndPrependChar '\r' string  = '\\' : 'r' : string
-escapeAndPrependChar '\n' string  = '\\' : 'n' : string
-escapeAndPrependChar '\t' string  = '\\' : 't' : string
-escapeAndPrependChar '\b' string  = '\\' : 'b' : string
-escapeAndPrependChar '\f' string  = '\\' : 'f' : string
-escapeAndPrependChar '\\' string  = '\\' : '\\' : string
-escapeAndPrependChar '/' string   = '\\' : '/' : string
-escapeAndPrependChar '"' string   = '\\' : '"' : string
-escapeAndPrependChar char string
-    | requiresEscaping  = (printf "\\u04%x" $ fromEnum char) ++ string
-    | otherwise         = char : string
-  where
-    requiresEscaping    = char < '\x20'
+jsonStringShow :: String -> String
+jsonStringShow !string = '"' : (L.foldr escapeAndPrependChar "\"" string)
 
-collectStringParts ('\\' : 'r' : remainder) workingString   = collectStringParts remainder ('\r' : workingString)
-collectStringParts ('\\' : 'n' : remainder) workingString   = collectStringParts remainder ('\n' : workingString)
-collectStringParts ('\\' : 't' : remainder) workingString   = collectStringParts remainder ('\t' : workingString)
-collectStringParts ('\\' : 'b' : remainder) workingString   = collectStringParts remainder ('\b' : workingString)
-collectStringParts ('\\' : 'f' : remainder) workingString   = collectStringParts remainder ('\f' : workingString)
-collectStringParts ('\\' : '\\' : remainder) workingString  = collectStringParts remainder ('\\' : workingString)
-collectStringParts ('\\' : '/' : remainder) workingString   = collectStringParts remainder ('/' : workingString)
-collectStringParts ('\\' : '"' : remainder) workingString   = collectStringParts remainder ('"' : workingString)
+escapeAndPrependChar :: Char -> String -> String
+escapeAndPrependChar '\r' !string = '\\' : 'r' : string
+escapeAndPrependChar '\n' !string = '\\' : 'n' : string
+escapeAndPrependChar '\t' !string = '\\' : 't' : string
+escapeAndPrependChar '\b' !string = '\\' : 'b' : string
+escapeAndPrependChar '\f' !string = '\\' : 'f' : string
+escapeAndPrependChar '\\' !string = '\\' : '\\' : string
+escapeAndPrependChar '/' !string  = '\\' : '/' : string
+escapeAndPrependChar '"' !string  = '\\' : '"' : string
+escapeAndPrependChar !char !string
+    | requiresEscaping  = (printf "\\u%04x" $ fromEnum char) ++ string
+    | otherwise         = char : string
+   where
+    !requiresEscaping    = char < '\x20'
 
 foldJson :: a -> (Bool -> a) -> (Double -> a) -> (String -> a) -> (JArray -> a) -> (JObject -> a) -> Json -> a
 foldJson _ _ _ _ _ jsonObject (JsonObject value)  = jsonObject value
