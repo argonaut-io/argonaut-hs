@@ -9,7 +9,6 @@ module Data.Argonaut.Parser
 
 import Data.Bits
 import Data.Char
-import Data.Either
 import Data.Argonaut
 import Control.Monad.Identity
 import Text.Read
@@ -54,7 +53,7 @@ expectValue :: String -> EitherStringParseResult (String, Json)
 expectValue "" = Left UnexpectedTermination
 expectValue ('[' : remainder) = expectArray True V.empty remainder
 expectValue ('{' : remainder) = expectObject True M.empty remainder
-expectValue ('\"' : remainder) = fmap (\(remainder, string) -> (remainder, fromString string)) (expectStringNoStartBounds remainder)
+expectValue ('\"' : remainder) = fmap (\(r, string) -> (r, fromString string)) (expectStringNoStartBounds remainder)
 expectValue ('t' : 'r' : 'u' : 'e' : remainder) = Right (remainder, jsonTrue)
 expectValue ('f' : 'a' : 'l' : 's' : 'e' : remainder) = Right (remainder, jsonFalse)
 expectValue ('n' : 'u' : 'l' : 'l' : remainder) = Right (remainder, jsonNull)
@@ -120,13 +119,21 @@ collectStringParts :: String -> String -> EitherStringParseResult (String, Strin
 collectStringParts [] _ = Left UnexpectedTermination
 collectStringParts ('\"' : remainder) workingString = Right (remainder, workingString)
 collectStringParts ('\\' : 'u' : first : second : third : fourth : remainder) workingString =
-                     let validHex = isHexDigit first && isHexDigit second && isHexDigit third && isHexDigit fourth
-                         firstValue = (digitToInt first) `shiftL` 12
-                         secondValue = (digitToInt second) `shiftL` 8
-                         thirdValue = (digitToInt third) `shiftL` 4
-                         fourthValue = digitToInt fourth
-                         escapedChar = toEnum $ (firstValue .|. secondValue .|. thirdValue .|. fourthValue)
-                     in if validHex then (collectStringParts remainder (escapedChar : workingString)) else Left (InvalidEscapeSequence ('\\' : 'u' : first : second : third : fourth : remainder))
+                     let validHex = validUnicodeHex first second third fourth
+                         invalidEscapeSequence = Left (InvalidEscapeSequence ('\\' : 'u' : first : second : third : fourth : remainder))
+                         escapeSequenceValue = unicodeEscapeSequenceValue first second third fourth
+                         isSurrogateLead = escapeSequenceValue >= 0xD800 && escapeSequenceValue <= 0xDBFF
+                         escapedChar = toEnum $ escapeSequenceValue
+                         surrogateResult = case remainder of
+                            '\\' : 'u' : trailFirst : trailSecond : trailThird : trailFourth : trailRemainder ->
+                              let validTrailHex = validUnicodeHex trailFirst trailSecond trailThird trailFourth
+                                  trailEscapeSequenceValue = unicodeEscapeSequenceValue trailFirst trailSecond trailThird trailFourth
+                                  isSurrogateTrail = trailEscapeSequenceValue >= 0xDC00 && trailEscapeSequenceValue <= 0xDFFF
+                                  surrogatePairChar = toEnum ((shiftL 10 $ escapeSequenceValue - 0xD800) + (trailEscapeSequenceValue - 0xDC00))
+                              in if validTrailHex && isSurrogateTrail then (collectStringParts trailRemainder (surrogatePairChar : workingString)) else invalidEscapeSequence
+                            _ -> invalidEscapeSequence
+                         validResult = if isSurrogateLead then surrogateResult else collectStringParts remainder (escapedChar : workingString)
+                     in if validHex then validResult else invalidEscapeSequence
 collectStringParts ('\\' : 'r' : remainder) workingString = collectStringParts remainder ('\r' : workingString)
 collectStringParts ('\\' : 'n' : remainder) workingString = collectStringParts remainder ('\n' : workingString)
 collectStringParts ('\\' : 't' : remainder) workingString = collectStringParts remainder ('\t' : workingString)
@@ -137,6 +144,17 @@ collectStringParts ('\\' : '/' : remainder) workingString = collectStringParts r
 collectStringParts ('\\' : '"' : remainder) workingString = collectStringParts remainder ('"' : workingString)
 collectStringParts ('\\' : remainder) _ = Left (InvalidEscapeSequence ('\\' : remainder))
 collectStringParts (char : remainder) workingString = collectStringParts remainder (char : workingString)
+
+validUnicodeHex :: Char -> Char -> Char -> Char -> Bool
+validUnicodeHex first second third fourth = isHexDigit first && isHexDigit second && isHexDigit third && isHexDigit fourth
+
+unicodeEscapeSequenceValue :: Char -> Char -> Char -> Char -> Int
+unicodeEscapeSequenceValue first second third fourth =
+    let firstValue = (digitToInt first) `shiftL` 12
+        secondValue = (digitToInt second) `shiftL` 8
+        thirdValue = (digitToInt third) `shiftL` 4
+        fourthValue = digitToInt fourth
+    in firstValue .|. secondValue .|. thirdValue .|. fourthValue
 
 isNumberChar :: Char -> Bool
 isNumberChar char = (char >= '0' && char <= '9') || char == '+' || char == '-' || char == 'e' || char == 'E' || char == '.'

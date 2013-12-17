@@ -50,7 +50,6 @@ import Control.Monad()
 import Control.Applicative()
 import Data.Foldable
 import Data.Maybe
-import qualified Data.Char as C
 import qualified Data.List as L
 import Data.Typeable(Typeable)
 import qualified Data.Vector as V
@@ -73,7 +72,7 @@ data Json = JsonObject !JObject
 
 instance Show Json where
   show (JsonObject !fields) = ('{' : (L.concat $ L.intersperse "," $ fmap (\(!key, !value) -> (jsonStringShow key) ++ (':' : (show value))) $ M.toList fields)) ++ "}"
-  show (JsonArray !entries) = ('[' : (L.concat $ L.intersperse "," $ fmap show $ toList entries)) ++ "]"
+  show (JsonArray !entries) = ('[' : (L.concat $ L.intersperse "," $ fmap show $ V.toList entries)) ++ "]"
   show (JsonString !string) = jsonStringShow string
   show (JsonNumber !number) = show number
   show (JsonBool !bool)     = if bool then "true" else "false"
@@ -103,7 +102,7 @@ foldJson _ _ _ _ jsonArray _ (JsonArray value)    = jsonArray value
 foldJson _ _ _ jsonString _ _ (JsonString value)  = jsonString value
 foldJson _ _ jsonNumber _ _ _ (JsonNumber value)  = jsonNumber value
 foldJson _ jsonBool _ _ _ _ (JsonBool value)      = jsonBool value
-foldJson jsonNull _ _ _ _ _ (JsonNull)            = jsonNull
+foldJson jsonNullValue _ _ _ _ _ (JsonNull)       = jsonNullValue
 
 isNull :: Json -> Bool
 isNull JsonNull = True
