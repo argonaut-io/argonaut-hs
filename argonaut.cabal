@@ -29,7 +29,8 @@ library
                                     vector >=0.10.9.1,
                                     lens >=3.10,
                                     mtl >=2.1.2,
-                                    text >= 0.11.3.1
+                                    text >= 0.11.3.1,
+                                    template-haskell >= 2.8.0.0
     ghc-options:                    -rtsopts
                                     -Wall
                                     -O2
@@ -50,6 +51,7 @@ test-suite tests
                                     lens >=3.10,
                                     mtl >=2.1.2,
                                     text >= 0.11.3.1,
+                                    template-haskell >= 2.8.0.0,
                                     QuickCheck -any,
                                     hspec -any
     ghc-options:                    -rtsopts
@@ -59,6 +61,7 @@ test-suite tests
     main-is:                        Spec.hs
     buildable:                      True
     default-language:               Haskell2010
+    default-extensions:             TemplateHaskell
     hs-source-dirs:                 src
                                     test
 
@@ -68,6 +71,7 @@ benchmark argonaut-bench
                                     benchmark
     buildable:                      True
     default-language:               Haskell2010
+    default-extensions:             TemplateHaskell
     main-is:                        MainBenchmarkSuite.hs
     build-depends:                  base ==4.*,
                                     unordered-containers >=0.2.2.3,
