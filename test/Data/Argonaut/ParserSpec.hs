@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings, TemplateHaskell #-}
 
-module Data.Argonaut.Parser.Spec where
+module Data.Argonaut.ParserSpec where
 
 import Control.Monad
 import Data.Argonaut
