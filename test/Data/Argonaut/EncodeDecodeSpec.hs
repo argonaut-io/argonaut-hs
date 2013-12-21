@@ -8,5 +8,10 @@ import Data.Argonaut.TestInstances()
 import Test.Hspec
 
 spec :: Spec
-spec = do
-  $(buildEncodeDecodeTest [''String, ''Bool, ''Double, ''JArray, ''JObject])
+spec = parallel $ do
+  $(buildEncodeDecodeTest [
+    ''JString
+    , ''Bool
+    , ''Double
+    , ''JArray
+    , ''JObject])

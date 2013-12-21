@@ -64,9 +64,9 @@ expectValue ('\t' : remainder) = expectValue remainder
 expectValue text = expectNumber text
 
 
-expectObject :: Bool -> JObject -> String -> EitherStringParseResult (String, Json)
+expectObject :: Bool -> M.HashMap JString Json -> String -> EitherStringParseResult (String, Json)
 expectObject _ _ "" = Left $ UnexpectedTermination
-expectObject _ fields ('}' : remainder) = Right (remainder, fromObject fields)
+expectObject _ fields ('}' : remainder) = Right (remainder, fromObject $ JObject fields)
 expectObject first fields (' ' : remainder) = expectObject first fields remainder
 expectObject first fields ('\r' : remainder) = expectObject first fields remainder
 expectObject first fields ('\t' : remainder) = expectObject first fields remainder
@@ -76,13 +76,13 @@ expectObject first fields text =
                                                (afterKey, key) <- expectString afterEntrySeparator
                                                afterFieldSeparator <- expectFieldSeparator afterKey
                                                (afterValue, value) <- expectValue afterFieldSeparator
-                                               expectObject False (M.insert key value fields) afterValue
+                                               expectObject False (M.insert (JString key) value fields) afterValue
                                in result
 
 
 expectArray :: Bool -> V.Vector Json -> String -> EitherStringParseResult (String, Json)
 expectArray _ _ [] = Left $ UnexpectedTermination
-expectArray _ entries (']' : remainder) = Right (remainder, fromArray entries)
+expectArray _ entries (']' : remainder) = Right (remainder, fromArray $ JArray entries)
 expectArray first entries (' ' : remainder) = expectArray first entries remainder
 expectArray first entries ('\r' : remainder) = expectArray first entries remainder
 expectArray first entries ('\t' : remainder) = expectArray first entries remainder

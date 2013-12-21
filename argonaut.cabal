@@ -30,7 +30,8 @@ library
                                     lens >=3.10,
                                     mtl >=2.1.2,
                                     text >= 0.11.3.1,
-                                    template-haskell >= 2.8.0.0
+                                    template-haskell >= 2.8.0.0,
+                                    hashable >= 1.2.1.0
     ghc-options:                    -rtsopts
                                     -Wall
                                     -O2
@@ -52,11 +53,13 @@ test-suite tests
                                     mtl >=2.1.2,
                                     text >= 0.11.3.1,
                                     template-haskell >= 2.8.0.0,
+                                    hashable >= 1.2.1.0,
                                     QuickCheck -any,
                                     hspec -any
     ghc-options:                    -rtsopts
                                     -Wall
                                     -O2
+                                    -threaded
     type:                           exitcode-stdio-1.0
     main-is:                        Spec.hs
     buildable:                      True
@@ -82,6 +85,8 @@ benchmark argonaut-bench
                                     directory >= 1.2.0.1,
                                     aeson >= 0.6.2.1,
                                     text >= 0.11.3.1,
+                                    template-haskell >= 2.8.0.0,
+                                    hashable >= 1.2.1.0,
                                     bytestring >= 0.10.4.0,
                                     attoparsec >= 0.10.4.0
     ghc-options:                    -rtsopts

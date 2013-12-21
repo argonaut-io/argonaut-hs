@@ -19,6 +19,8 @@ module Data.Argonaut
     , isObject
     , toBool
     , fromBool
+    , toJString
+    , fromJString
     , toString
     , fromString
     , toDouble
@@ -44,48 +46,57 @@ module Data.Argonaut
     , singleItemArray
     , emptyObject
     , singleItemObject
-    , objectFromFoldable
-    , arrayFromFoldable
-    , JField
-    , JObject
-    , JArray
+    , JObject(..)
+    , JArray(..)
+    , JString(..)
+    , runJObject
+    , runJArray
   ) where
 
 import Control.Lens
 import Control.Monad()
 import Control.Applicative()
-import Data.Foldable
 import Data.Maybe
+import Data.Hashable(Hashable(..))
 import qualified Data.List as L
 import Data.Typeable(Typeable)
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M
 import Text.Printf
 
-type JField = String
+newtype JString = JString String deriving (Show, Eq, Typeable)
 
-type JObject = M.HashMap JField Json
+instance Hashable JString where
+  hashWithSalt salt (JString string) = hashWithSalt salt string
 
-type JArray = V.Vector Json
+newtype JObject = JObject (M.HashMap JString Json) deriving (Show, Eq, Typeable)
+
+runJObject :: JObject -> M.HashMap JString Json
+runJObject (JObject fields) = fields
+
+newtype JArray = JArray (V.Vector Json) deriving (Show, Eq, Typeable)
+
+runJArray :: JArray -> V.Vector Json
+runJArray (JArray values) = values
 
 data Json = JsonObject !JObject
           | JsonArray !JArray
-          | JsonString !String
+          | JsonString !JString
           | JsonNumber !Double
           | JsonBool !Bool
           | JsonNull
           deriving (Eq, Typeable)
 
 instance Show Json where
-  show (JsonObject !fields) = ('{' : (L.concat $ L.intersperse "," $ fmap (\(!key, !value) -> (jsonStringShow key) ++ (':' : (show value))) $ M.toList fields)) ++ "}"
-  show (JsonArray !entries) = ('[' : (L.concat $ L.intersperse "," $ fmap show $ V.toList entries)) ++ "]"
+  show (JsonObject (JObject !fields)) = ('{' : (L.concat $ L.intersperse "," $ fmap (\(!key, !value) -> (jsonStringShow key) ++ (':' : (show value))) $ M.toList fields)) ++ "}"
+  show (JsonArray (JArray !entries)) = ('[' : (L.concat $ L.intersperse "," $ fmap show $ V.toList entries)) ++ "]"
   show (JsonString !string) = jsonStringShow string
   show (JsonNumber !number) = show number
   show (JsonBool !bool)     = if bool then "true" else "false"
   show JsonNull             = "null"
 
-jsonStringShow :: String -> String
-jsonStringShow !string = '"' : (L.foldr escapeAndPrependChar "\"" string)
+jsonStringShow :: JString -> String
+jsonStringShow (JString !string) = '"' : (L.foldr escapeAndPrependChar "\"" string)
 
 escapeAndPrependChar :: Char -> String -> String
 escapeAndPrependChar '\r' !string = '\\' : 'r' : string
@@ -102,7 +113,7 @@ escapeAndPrependChar !char !string
    where
     !requiresEscaping    = char < '\x20'
 
-foldJson :: a -> (Bool -> a) -> (Double -> a) -> (String -> a) -> (JArray -> a) -> (JObject -> a) -> Json -> a
+foldJson :: a -> (Bool -> a) -> (Double -> a) -> (JString -> a) -> (JArray -> a) -> (JObject -> a) -> Json -> a
 foldJson _ _ _ _ _ jsonObject (JsonObject value)  = jsonObject value
 foldJson _ _ _ _ jsonArray _ (JsonArray value)    = jsonArray value
 foldJson _ _ _ jsonString _ _ (JsonString value)  = jsonString value
@@ -122,7 +133,7 @@ foldJsonNumber :: a -> (Double -> a) -> Json -> a
 foldJsonNumber _ valueTransform (JsonNumber value) = valueTransform value
 foldJsonNumber defaultValue _ _ = defaultValue
 
-foldJsonString :: a -> (String -> a) -> Json -> a
+foldJsonString :: a -> (JString -> a) -> Json -> a
 foldJsonString _ valueTransform (JsonString value) = valueTransform value
 foldJsonString defaultValue _ _ = defaultValue
 
@@ -169,12 +180,19 @@ toBool _ = Nothing
 fromBool :: Bool -> Json
 fromBool = JsonBool
 
+toJString :: Json -> Maybe JString
+toJString (JsonString text) = Just text
+toJString _ = Nothing
+
+fromJString :: JString -> Json
+fromJString string = JsonString $ string
+
 toString :: Json -> Maybe String
-toString (JsonString text) = Just text
+toString (JsonString (JString text)) = Just text
 toString _ = Nothing
 
 fromString :: String -> Json
-fromString string = JsonString string
+fromString string = JsonString $ JString string
 
 toDouble :: Json -> Maybe Double
 toDouble (JsonNumber double) = Just double
@@ -243,22 +261,16 @@ jsonNull :: Json
 jsonNull = JsonNull
 
 emptyString :: Json
-emptyString = JsonString ""
+emptyString = fromString ""
 
 emptyArray :: Json
-emptyArray = JsonArray V.empty
+emptyArray = JsonArray $ JArray $ V.empty
 
 singleItemArray :: Json -> Json
-singleItemArray = JsonArray . V.singleton
+singleItemArray = JsonArray . JArray . V.singleton
 
 emptyObject :: Json
-emptyObject = JsonObject (M.empty)
+emptyObject = JsonObject $ JObject $ M.empty
 
-singleItemObject :: JField -> Json -> Json
-singleItemObject field json = JsonObject (M.singleton field json)
-
-objectFromFoldable :: Foldable f => f (JField, Json) -> Json
-objectFromFoldable = JsonObject . foldMap (uncurry M.singleton)
-
-arrayFromFoldable :: Foldable f => f Json -> Json
-arrayFromFoldable = JsonArray . foldMap V.singleton
+singleItemObject :: JString -> Json -> Json
+singleItemObject field json = JsonObject $ JObject $ (M.singleton field json)

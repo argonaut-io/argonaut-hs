@@ -9,20 +9,23 @@ import Test.QuickCheck
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M
 
+instance Arbitrary JString where
+  arbitrary = liftM JString arbitrary
+
 instance Arbitrary Json where
   arbitrary = genJsonDepthLimited 3
 
 instance Arbitrary JArray where
-  arbitrary = liftM V.fromList arbitrary
+  arbitrary = liftM (JArray . V.fromList) arbitrary
 
 instance Arbitrary JObject where
-  arbitrary = liftM M.fromList arbitrary
+  arbitrary = liftM (JObject . M.fromList) arbitrary
 
 genJsonObject :: Gen Json
-genJsonObject = liftM (fromObject . M.fromList) arbitrary
+genJsonObject = liftM fromObject arbitrary
 
 genJsonArray :: Gen Json
-genJsonArray = liftM (fromArray . V.fromList) arbitrary
+genJsonArray = liftM fromArray arbitrary
 
 genJsonNumber :: Gen Json
 genJsonNumber = liftM fromDoubleToNumberOrNull arbitrary
@@ -46,8 +49,8 @@ genNonNestedJson = frequency [
 
 genJsonDepthLimited :: Int -> Gen Json
 genJsonDepthLimited n | n > 1     = frequency [
-                                            (1, (liftM (fromObject . M.fromList) (genJsonFieldListDepthLimited (n - 1))))
-                                            , (1, (liftM (fromArray . V.fromList) (genJsonListDepthLimited (n - 1))))
+                                            (1, (liftM (fromObject . JObject . M.fromList) (genJsonFieldListDepthLimited (n - 1))))
+                                            , (1, (liftM (fromArray . JArray . V.fromList) (genJsonListDepthLimited (n - 1))))
                                             , (8, genNonNestedJson)
                                           ]
                       | otherwise = genNonNestedJson
@@ -55,7 +58,7 @@ genJsonDepthLimited n | n > 1     = frequency [
 genJsonListDepthLimited :: Int -> Gen [Json]
 genJsonListDepthLimited n = listOf (genJsonDepthLimited n)
 
-genJsonFieldListDepthLimited :: Int -> Gen [(JField, Json)]
+genJsonFieldListDepthLimited :: Int -> Gen [(JString, Json)]
 genJsonFieldListDepthLimited n =
   let generator = do  key <- arbitrary
                       value <- genJsonDepthLimited n
