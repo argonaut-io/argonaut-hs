@@ -15,4 +15,4 @@ spec = do
         let
           asString = show originalJson
           parsedJson = parseString asString
-        in parsedJson `shouldBe` (Right originalJson)
+        in parsedJson `shouldBe` (StringErrorParseSuccess originalJson)
