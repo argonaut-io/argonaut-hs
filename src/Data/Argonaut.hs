@@ -57,14 +57,16 @@ import Control.Lens
 import Control.Monad()
 import Control.Applicative()
 import Data.Maybe
+import Data.Monoid ((<>))
 import Data.Hashable(Hashable(..))
 import qualified Data.List as L
+import qualified Data.Text as T
 import Data.Typeable(Typeable)
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M
 import Text.Printf
 
-newtype JString = JString String deriving (Show, Eq, Typeable)
+newtype JString = JString T.Text deriving (Show, Eq, Typeable)
 
 instance Hashable JString where
   hashWithSalt salt (JString string) = hashWithSalt salt string
@@ -96,20 +98,20 @@ instance Show Json where
   show JsonNull             = "null"
 
 jsonStringShow :: JString -> String
-jsonStringShow (JString !string) = '"' : (L.foldr escapeAndPrependChar "\"" string)
+jsonStringShow (JString !string) = '"' : T.unpack (T.foldr escapeAndPrependChar "\"" string)
 
-escapeAndPrependChar :: Char -> String -> String
-escapeAndPrependChar '\r' !string = '\\' : 'r' : string
-escapeAndPrependChar '\n' !string = '\\' : 'n' : string
-escapeAndPrependChar '\t' !string = '\\' : 't' : string
-escapeAndPrependChar '\b' !string = '\\' : 'b' : string
-escapeAndPrependChar '\f' !string = '\\' : 'f' : string
-escapeAndPrependChar '\\' !string = '\\' : '\\' : string
-escapeAndPrependChar '/' !string  = '\\' : '/' : string
-escapeAndPrependChar '"' !string  = '\\' : '"' : string
+escapeAndPrependChar :: Char -> T.Text -> T.Text
+escapeAndPrependChar '\r' !string = "\\r" <> string
+escapeAndPrependChar '\n' !string = "\\n" <> string
+escapeAndPrependChar '\t' !string = "\\t" <> string
+escapeAndPrependChar '\b' !string = "\\b" <> string
+escapeAndPrependChar '\f' !string = "\\f" <> string
+escapeAndPrependChar '\\' !string = "\\\\" <> string
+escapeAndPrependChar '/'  !string  = "\\/" <> string
+escapeAndPrependChar '\"' !string  = "\\\"" <> string
 escapeAndPrependChar !char !string
-    | requiresEscaping  = (printf "\\u%04x" $ fromEnum char) ++ string
-    | otherwise         = char : string
+    | requiresEscaping  = T.pack (printf "\\u%04x" $ fromEnum char) <> string
+    | otherwise         = char `T.cons` string
    where
     !requiresEscaping    = char < '\x20'
 
@@ -185,13 +187,13 @@ toJString (JsonString text) = Just text
 toJString _ = Nothing
 
 fromJString :: JString -> Json
-fromJString string = JsonString $ string
+fromJString = JsonString
 
-toString :: Json -> Maybe String
+toString :: Json -> Maybe T.Text
 toString (JsonString (JString text)) = Just text
 toString _ = Nothing
 
-fromString :: String -> Json
+fromString :: T.Text -> Json
 fromString string = JsonString $ JString string
 
 toDouble :: Json -> Maybe Double
@@ -236,7 +238,7 @@ arrayL = prism' fromArray toArray
 objectL :: Prism' Json JObject
 objectL = prism' fromObject toObject
 
-stringL :: Prism' Json String
+stringL :: Prism' Json T.Text
 stringL = prism' fromString toString
 
 nullL :: Prism' Json ()
@@ -246,7 +248,7 @@ fromDoubleToNumberOrNull :: Double -> Json
 fromDoubleToNumberOrNull = fromMaybe JsonNull . fromDouble
 
 fromDoubleToNumberOrString :: Double -> Json
-fromDoubleToNumberOrString double = fromMaybe (fromString $ show double) (fromDouble double)
+fromDoubleToNumberOrString double = fromMaybe (fromString $ T.pack $ show double) (fromDouble double)
 
 jsonTrue :: Json
 jsonTrue = JsonBool True
@@ -264,13 +266,13 @@ emptyString :: Json
 emptyString = fromString ""
 
 emptyArray :: Json
-emptyArray = JsonArray $ JArray $ V.empty
+emptyArray = JsonArray $ JArray V.empty
 
 singleItemArray :: Json -> Json
 singleItemArray = JsonArray . JArray . V.singleton
 
 emptyObject :: Json
-emptyObject = JsonObject $ JObject $ M.empty
+emptyObject = JsonObject $ JObject M.empty
 
 singleItemObject :: JString -> Json -> Json
-singleItemObject field json = JsonObject $ JObject $ (M.singleton field json)
+singleItemObject field json = JsonObject $ JObject (M.singleton field json)

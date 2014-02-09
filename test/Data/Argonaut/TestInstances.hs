@@ -3,8 +3,10 @@
 
 module Data.Argonaut.TestInstances where
 
+import Control.Applicative
 import Control.Monad
 import Data.Argonaut
+import Data.Text (Text, pack)
 import Test.QuickCheck
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M
@@ -20,6 +22,9 @@ instance Arbitrary JArray where
 
 instance Arbitrary JObject where
   arbitrary = liftM (JObject . M.fromList) arbitrary
+
+instance Arbitrary Text where
+    arbitrary = pack <$> (arbitrary :: Gen String)
 
 genJsonObject :: Gen Json
 genJsonObject = liftM fromObject arbitrary
