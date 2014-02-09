@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Data.Argonaut.Parser
   (
@@ -10,7 +11,10 @@ module Data.Argonaut.Parser
     , parseString
     , ParserInputString
     , StringErrorParseResult(..)
+    , utfParts
 ) where
+
+import qualified Data.Text as T
 
 import Data.Bits
 import Data.Char
@@ -35,12 +39,12 @@ data ParseError a = UnexpectedTermination
                   | ExpectedToken !a !a
                   deriving (Eq, Show, Typeable)
 
-newtype ParserInputString = ParserInputString String deriving (Eq, Ord, Show)
+newtype ParserInputString = ParserInputString T.Text deriving (Eq, Ord, Show)
 
-runInputString :: ParserInputString -> String
+runInputString :: ParserInputString -> T.Text
 runInputString (ParserInputString value) = value
 
-data StringErrorParseResult a = StringErrorParseFailure !(ParseError String) | StringErrorParseSuccess !a deriving (Eq, Show)
+data StringErrorParseResult a = StringErrorParseFailure !(ParseError T.Text) | StringErrorParseSuccess !a deriving (Eq, Show)
 
 instance Functor StringErrorParseResult where
   fmap _ (StringErrorParseFailure x) = StringErrorParseFailure x
@@ -54,42 +58,41 @@ instance Monad StringErrorParseResult where
 instance Parser Identity StringErrorParseResult ParserInputString where
   parseJson (Identity json) = parseString $ runInputString json
 
-validSuffixContent :: String -> Bool
-validSuffixContent (' ' : remainder) = validSuffixContent remainder
-validSuffixContent ('\r' : remainder) = validSuffixContent remainder
-validSuffixContent ('\n' : remainder) = validSuffixContent remainder
-validSuffixContent ('\t' : remainder) = validSuffixContent remainder
-validSuffixContent [] = True
-validSuffixContent _ = False
+validSuffixContent :: T.Text -> Bool
+validSuffixContent (T.stripPrefix " " -> Just remainder) = validSuffixContent remainder
+validSuffixContent (T.stripPrefix "\r" -> Just remainder) = validSuffixContent remainder
+validSuffixContent (T.stripPrefix "\n" -> Just remainder) = validSuffixContent remainder
+validSuffixContent (T.stripPrefix "\t" -> Just remainder) = validSuffixContent remainder
+validSuffixContent text = T.null text
 
-checkSuffix :: (String, Json) -> StringErrorParseResult Json
+checkSuffix :: (T.Text, Json) -> StringErrorParseResult Json
 checkSuffix (suffix, json) = if validSuffixContent suffix then StringErrorParseSuccess json else StringErrorParseFailure (InvalidSuffixContent suffix)
 
-parseString :: String -> StringErrorParseResult Json
-parseString text = (expectValue text) >>= checkSuffix
+parseString :: T.Text -> StringErrorParseResult Json
+parseString text = expectValue text >>= checkSuffix
 
-expectValue :: String -> StringErrorParseResult (String, Json)
+expectValue :: T.Text -> StringErrorParseResult (T.Text, Json)
 expectValue "" = StringErrorParseFailure UnexpectedTermination
-expectValue ('[' : remainder) = expectArray True V.empty remainder
-expectValue ('{' : remainder) = expectObject True M.empty remainder
-expectValue ('\"' : remainder) = fmap (\(r, string) -> (r, fromString string)) (expectStringNoStartBounds remainder)
-expectValue ('t' : 'r' : 'u' : 'e' : remainder) = StringErrorParseSuccess (remainder, jsonTrue)
-expectValue ('f' : 'a' : 'l' : 's' : 'e' : remainder) = StringErrorParseSuccess (remainder, jsonFalse)
-expectValue ('n' : 'u' : 'l' : 'l' : remainder) = StringErrorParseSuccess (remainder, jsonNull)
-expectValue (' ' : remainder) = expectValue remainder
-expectValue ('\r' : remainder) = expectValue remainder
-expectValue ('\n' : remainder) = expectValue remainder
-expectValue ('\t' : remainder) = expectValue remainder
+expectValue (T.stripPrefix "[" -> Just remainder) = expectArray True V.empty remainder
+expectValue (T.stripPrefix "{" -> Just remainder) = expectObject True M.empty remainder
+expectValue (T.stripPrefix "\"" -> Just remainder) = fmap (\(r, text) -> (r, fromString text)) (expectStringNoStartBounds remainder)
+expectValue (T.stripPrefix "true" -> Just remainder) = StringErrorParseSuccess (remainder, jsonTrue)
+expectValue (T.stripPrefix "false" -> Just remainder) = StringErrorParseSuccess (remainder, jsonFalse)
+expectValue (T.stripPrefix "null" -> Just remainder) = StringErrorParseSuccess (remainder, jsonNull)
+expectValue (T.stripPrefix " " -> Just remainder) = expectValue remainder
+expectValue (T.stripPrefix "\r" -> Just remainder) = expectValue remainder
+expectValue (T.stripPrefix "\n" -> Just remainder) = expectValue remainder
+expectValue (T.stripPrefix "\t" -> Just remainder) = expectValue remainder
 expectValue text = expectNumber text
 
 
-expectObject :: Bool -> M.HashMap JString Json -> String -> StringErrorParseResult (String, Json)
-expectObject _ _ "" = StringErrorParseFailure $ UnexpectedTermination
-expectObject _ fields ('}' : remainder) = StringErrorParseSuccess (remainder, fromObject $ JObject fields)
-expectObject first fields (' ' : remainder) = expectObject first fields remainder
-expectObject first fields ('\r' : remainder) = expectObject first fields remainder
-expectObject first fields ('\t' : remainder) = expectObject first fields remainder
-expectObject first fields ('\n' : remainder) = expectObject first fields remainder
+expectObject :: Bool -> M.HashMap JString Json -> T.Text -> StringErrorParseResult (T.Text, Json)
+expectObject _ _ "" = StringErrorParseFailure UnexpectedTermination
+expectObject _ fields (T.stripPrefix "}" -> Just remainder) = StringErrorParseSuccess (remainder, fromObject $ JObject fields)
+expectObject first fields (T.stripPrefix " " -> Just remainder) = expectObject first fields remainder
+expectObject first fields (T.stripPrefix "\r" -> Just remainder) = expectObject first fields remainder
+expectObject first fields (T.stripPrefix "\t" -> Just remainder) = expectObject first fields remainder
+expectObject first fields (T.stripPrefix "\n" -> Just remainder) = expectObject first fields remainder
 expectObject first fields text =
                                let result = do afterEntrySeparator <- if first then StringErrorParseSuccess text else expectEntrySeparator text
                                                (afterKey, key) <- expectString afterEntrySeparator
@@ -99,70 +102,83 @@ expectObject first fields text =
                                in result
 
 
-expectArray :: Bool -> V.Vector Json -> String -> StringErrorParseResult (String, Json)
-expectArray _ _ [] = StringErrorParseFailure $ UnexpectedTermination
-expectArray _ entries (']' : remainder) = StringErrorParseSuccess (remainder, fromArray $ JArray entries)
-expectArray first entries (' ' : remainder) = expectArray first entries remainder
-expectArray first entries ('\r' : remainder) = expectArray first entries remainder
-expectArray first entries ('\t' : remainder) = expectArray first entries remainder
-expectArray first entries ('\n' : remainder) = expectArray first entries remainder
+expectArray :: Bool -> V.Vector Json -> T.Text -> StringErrorParseResult (T.Text, Json)
+expectArray _ _ (T.null -> True) = StringErrorParseFailure UnexpectedTermination
+expectArray _ entries (T.stripPrefix "]" -> Just remainder) = StringErrorParseSuccess (remainder, fromArray $ JArray entries)
+expectArray first entries (T.stripPrefix " " -> Just remainder) = expectArray first entries remainder
+expectArray first entries (T.stripPrefix "\r" -> Just remainder) = expectArray first entries remainder
+expectArray first entries (T.stripPrefix "\t" -> Just remainder) = expectArray first entries remainder
+expectArray first entries (T.stripPrefix "\n" -> Just remainder) = expectArray first entries remainder
 expectArray first entries text =
                                let result = do afterEntrySeparator <- if first then StringErrorParseSuccess text else expectEntrySeparator text
                                                (afterValue, value) <- expectValue afterEntrySeparator
                                                expectArray False (V.snoc entries value) afterValue
                                in result
 
-expectString :: String -> StringErrorParseResult (String, String)
+expectString :: T.Text -> StringErrorParseResult (T.Text, T.Text)
 expectString text = do afterOpen <- expectStringBounds text
-                       afterString <- expectStringNoStartBounds afterOpen
-                       return afterString
+                       expectStringNoStartBounds afterOpen
 
-expectStringNoStartBounds :: String -> StringErrorParseResult (String, String)
-expectStringNoStartBounds text = do (remainder, textOfString) <- collectStringParts text []
-                                    return (remainder, reverse textOfString)
+expectStringNoStartBounds :: T.Text -> StringErrorParseResult (T.Text, T.Text)
+expectStringNoStartBounds text = do (remainder, textOfString) <- collectStringParts text T.empty
+                                    return (remainder, T.reverse textOfString)
 
-expectSpacerToken :: String -> Char -> String -> StringErrorParseResult String
-expectSpacerToken (firstChar : remainder) expectedToken failMessage = if firstChar == expectedToken then StringErrorParseSuccess remainder else StringErrorParseFailure (ExpectedToken (show expectedToken) failMessage)
-expectSpacerToken [] _ _ = StringErrorParseFailure UnexpectedTermination
+expectSpacerToken :: T.Text -> Char -> T.Text -> StringErrorParseResult T.Text
+expectSpacerToken (T.null -> True) _ _ = StringErrorParseFailure UnexpectedTermination
+expectSpacerToken text expectedToken failMessage = if firstChar == expectedToken then StringErrorParseSuccess remainder else StringErrorParseFailure (ExpectedToken (T.singleton expectedToken) failMessage)
+  where
+    firstChar = T.head text
+    remainder = T.tail text
 
-expectEntrySeparator :: String -> StringErrorParseResult String
+expectEntrySeparator :: T.Text -> StringErrorParseResult T.Text
 expectEntrySeparator text = expectSpacerToken text ',' "Expected entry separator."
 
-expectStringBounds :: String -> StringErrorParseResult String
+expectStringBounds :: T.Text -> StringErrorParseResult T.Text
 expectStringBounds text = expectSpacerToken text '"' "Expected string bounds."
 
-expectFieldSeparator :: String -> StringErrorParseResult String
+expectFieldSeparator :: T.Text -> StringErrorParseResult T.Text
 expectFieldSeparator text = expectSpacerToken text ':' "Expected field separator."
 
-collectStringParts :: String -> String -> StringErrorParseResult (String, String)
-collectStringParts [] _ = StringErrorParseFailure UnexpectedTermination
-collectStringParts ('\"' : remainder) workingString = StringErrorParseSuccess (remainder, workingString)
-collectStringParts ('\\' : 'u' : first : second : third : fourth : remainder) workingString =
+collectStringParts :: T.Text -> T.Text -> StringErrorParseResult (T.Text, T.Text)
+collectStringParts (T.null -> True) _ = StringErrorParseFailure UnexpectedTermination
+collectStringParts (T.stripPrefix "\"" -> Just remainder) workingString = StringErrorParseSuccess (remainder, workingString)
+collectStringParts (utfParts -> Just (first, second, third, fourth, remainder)) workingString =
                      let validHex = validUnicodeHex first second third fourth
-                         invalidEscapeSequence = StringErrorParseFailure (InvalidEscapeSequence ('\\' : 'u' : first : second : third : fourth : remainder))
+                         invalidEscapeSequence = StringErrorParseFailure (InvalidEscapeSequence ('\\' `T.cons` 'u' `T.cons` first `T.cons` second `T.cons` third `T.cons` fourth `T.cons` remainder))
                          escapeSequenceValue = unicodeEscapeSequenceValue first second third fourth
                          isSurrogateLead = escapeSequenceValue >= 0xD800 && escapeSequenceValue <= 0xDBFF
-                         escapedChar = toEnum $ escapeSequenceValue
+                         escapedChar = toEnum escapeSequenceValue
                          surrogateResult = case remainder of
-                            '\\' : 'u' : trailFirst : trailSecond : trailThird : trailFourth : trailRemainder ->
+                            (utfParts -> Just (trailFirst, trailSecond, trailThird, trailFourth, trailRemainder)) ->
                               let validTrailHex = validUnicodeHex trailFirst trailSecond trailThird trailFourth
                                   trailEscapeSequenceValue = unicodeEscapeSequenceValue trailFirst trailSecond trailThird trailFourth
                                   isSurrogateTrail = trailEscapeSequenceValue >= 0xDC00 && trailEscapeSequenceValue <= 0xDFFF
                                   surrogatePairChar = toEnum ((shiftL 10 $ escapeSequenceValue - 0xD800) + (trailEscapeSequenceValue - 0xDC00))
-                              in if validTrailHex && isSurrogateTrail then (collectStringParts trailRemainder (surrogatePairChar : workingString)) else invalidEscapeSequence
+                              in if validTrailHex && isSurrogateTrail then (collectStringParts trailRemainder (surrogatePairChar `T.cons` workingString)) else invalidEscapeSequence
                             _ -> invalidEscapeSequence
-                         validResult = if isSurrogateLead then surrogateResult else collectStringParts remainder (escapedChar : workingString)
+                         validResult = if isSurrogateLead then surrogateResult else collectStringParts remainder (escapedChar `T.cons` workingString)
                      in if validHex then validResult else invalidEscapeSequence
-collectStringParts ('\\' : 'r' : remainder) workingString = collectStringParts remainder ('\r' : workingString)
-collectStringParts ('\\' : 'n' : remainder) workingString = collectStringParts remainder ('\n' : workingString)
-collectStringParts ('\\' : 't' : remainder) workingString = collectStringParts remainder ('\t' : workingString)
-collectStringParts ('\\' : 'b' : remainder) workingString = collectStringParts remainder ('\b' : workingString)
-collectStringParts ('\\' : 'f' : remainder) workingString = collectStringParts remainder ('\f' : workingString)
-collectStringParts ('\\' : '\\' : remainder) workingString = collectStringParts remainder ('\\' : workingString)
-collectStringParts ('\\' : '/' : remainder) workingString = collectStringParts remainder ('/' : workingString)
-collectStringParts ('\\' : '"' : remainder) workingString = collectStringParts remainder ('"' : workingString)
-collectStringParts ('\\' : remainder) _ = StringErrorParseFailure (InvalidEscapeSequence ('\\' : remainder))
-collectStringParts (char : remainder) workingString = collectStringParts remainder (char : workingString)
+collectStringParts (T.stripPrefix "\\r" -> Just remainder) workingString = collectStringParts remainder ('\r' `T.cons` workingString)
+collectStringParts (T.stripPrefix "\\n" -> Just remainder) workingString = collectStringParts remainder ('\n' `T.cons` workingString)
+collectStringParts (T.stripPrefix "\\t" -> Just remainder) workingString = collectStringParts remainder ('\t' `T.cons` workingString)
+collectStringParts (T.stripPrefix "\\b" -> Just remainder) workingString = collectStringParts remainder ('\b' `T.cons` workingString)
+collectStringParts (T.stripPrefix "\\f" -> Just remainder) workingString = collectStringParts remainder ('\f' `T.cons` workingString)
+collectStringParts (T.stripPrefix "\\\\" -> Just remainder) workingString = collectStringParts remainder ('\\' `T.cons` workingString)
+collectStringParts (T.stripPrefix "\\/" -> Just remainder) workingString = collectStringParts remainder ('/' `T.cons` workingString)
+collectStringParts (T.stripPrefix "\\\"" -> Just remainder) workingString = collectStringParts remainder ('\"' `T.cons` workingString)
+collectStringParts (T.stripPrefix "\\" -> Just remainder) _ = StringErrorParseFailure (InvalidEscapeSequence ('\\' `T.cons` remainder))
+collectStringParts text workingString = collectStringParts (T.tail text) (T.head text `T.cons` workingString)
+
+
+utfParts :: T.Text -> Maybe (Char, Char, Char, Char, T.Text)
+utfParts (T.stripPrefix "\\u" -> Just rest) = Just (first, second, third, fourth, remainder)
+  where
+    (first, rest1) = slice rest
+    (second,rest2) = slice rest1
+    (third,rest3) = slice rest2
+    (fourth,remainder) = slice rest3
+    slice t = (T.head t, T.tail t)
+utfParts _ = Nothing
 
 validUnicodeHex :: Char -> Char -> Char -> Char -> Bool
 validUnicodeHex first second third fourth = isHexDigit first && isHexDigit second && isHexDigit third && isHexDigit fourth
@@ -176,12 +192,12 @@ unicodeEscapeSequenceValue first second third fourth =
     in firstValue .|. secondValue .|. thirdValue .|. fourthValue
 
 isNumberChar :: Char -> Bool
-isNumberChar char = (char >= '0' && char <= '9') || char == '+' || char == '-' || char == 'e' || char == 'E' || char == '.'
+isNumberChar char = isDigit char || char == '+' || char == '-' || char == 'e' || char == 'E' || char == '.'
 
-expectNumber :: String -> StringErrorParseResult (String, Json)
+expectNumber :: T.Text -> StringErrorParseResult (T.Text, Json)
 expectNumber text =
-                  let (numberPrefix, remainder) = span isNumberChar text
-                      parsedNumber = readMaybe numberPrefix
+                  let (numberPrefix, remainder) = T.span isNumberChar text
+                      parsedNumber = readMaybe . T.unpack $ numberPrefix
                       number = parsedNumber >>= fromDouble
                   in maybe (StringErrorParseFailure (InvalidNumberText numberPrefix)) (\n -> StringErrorParseSuccess (remainder, n)) number
 
