@@ -2,6 +2,23 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE ViewPatterns #-}
+
+#define BACKSLASH 92
+#define CLOSE_CURLY 125
+#define CLOSE_SQUARE 93
+#define COMMA 44
+#define DOUBLE_QUOTE 34
+#define OPEN_CURLY 123
+#define OPEN_SQUARE 91
+#define C_0 48
+#define C_9 57
+#define C_A 65
+#define C_F 70
+#define C_a 97
+#define C_f 102
+#define C_n 110
+#define C_t 116
 
 module Data.Argonaut.Parser
   (
@@ -13,6 +30,7 @@ module Data.Argonaut.Parser
 ) where
 
 import Data.Bits
+import Data.ByteString as B
 import Data.Char
 import Data.Argonaut
 import Control.Monad.Identity
@@ -20,6 +38,7 @@ import Text.Read
 import Data.Typeable(Typeable)
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M
+import Data.Text (Text)
 
 class Parser m n a | m a -> n where
   parseJson :: m a -> n Json
@@ -37,22 +56,104 @@ data ParseError a = UnexpectedTermination
 
 newtype ParserInputString = ParserInputString String deriving (Eq, Ord, Show)
 
+newtype ParserInputText = ParserInputText Text deriving (Eq, Ord, Show)
+
 runInputString :: ParserInputString -> String
 runInputString (ParserInputString value) = value
 
+runInputText :: ParserInputText -> Text
+runInputText (ParserInputText value) = value
+
 data StringErrorParseResult a = StringErrorParseFailure !(ParseError String) | StringErrorParseSuccess !a deriving (Eq, Show)
+
+data TextErrorParseResult a = TextErrorParseFailure !(ParseError Text) | TextErrorParseSuccess !a deriving (Eq, Show)
 
 instance Functor StringErrorParseResult where
   fmap _ (StringErrorParseFailure x) = StringErrorParseFailure x
   fmap f (StringErrorParseSuccess y) = StringErrorParseSuccess (f y)
+
+instance Functor TextErrorParseResult where
+  fmap _ (TextErrorParseFailure x) = TextErrorParseFailure x
+  fmap f (TextErrorParseSuccess y) = TextErrorParseSuccess (f y)
 
 instance Monad StringErrorParseResult where
   return = StringErrorParseSuccess
   StringErrorParseFailure l >>= _ = StringErrorParseFailure l
   StringErrorParseSuccess r >>= k = k r
 
+instance Monad TextErrorParseResult where
+  return = TextErrorParseSuccess
+  TextErrorParseFailure l >>= _ = TextErrorParseFailure l
+  TextErrorParseSuccess r >>= k = k r
+
 instance Parser Identity StringErrorParseResult ParserInputString where
   parseJson (Identity json) = parseString $ runInputString json
+
+instance Parser Identity TextErrorParseResult ParserInputText where
+  parseJson (Identity json) = parseText $ runInputText json
+
+
+
+
+validSuffixContent :: ByteString -> Bool
+validSuffixContent (' ' : remainder) = validSuffixContent remainder
+validSuffixContent ('\r' : remainder) = validSuffixContent remainder
+validSuffixContent ('\n' : remainder) = validSuffixContent remainder
+validSuffixContent ('\t' : remainder) = validSuffixContent remainder
+validSuffixContent [] = True
+validSuffixContent _ = False
+
+checkSuffix :: (String, Json) -> StringErrorParseResult Json
+checkSuffix (suffix, json) = if validSuffixContent suffix then StringErrorParseSuccess json else StringErrorParseFailure (InvalidSuffixContent suffix)
+
+
+
+
+
+
+parseText :: Text -> TextErrorParseResult Json
+parseText 
+    val jsonLength = json.length
+
+    @tailrec
+    def validSuffixContent(from: Int): Boolean = {
+      if (from >= jsonLength) true
+      else json(from) match {
+        case ' ' | '\r' | '\n' | '\t' => validSuffixContent(from + 1)
+        case _ => false
+      }
+    }
+
+    def parseResult(result: (Int, Json)): String \/ Json = {
+      result match {
+        case (`jsonLength`, jsonInstance) => \/-(jsonInstance)
+        case (remainder, jsonInstance) if (validSuffixContent(remainder)) => \/-(jsonInstance)
+        case (remainder, _) => "JSON contains invalid suffix content: %s".format(excerpt(json, remainder)).left
+      }
+    }
+
+    expectValue(json, 0).flatMap(parseResult)
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{-
+
 
 validSuffixContent :: String -> Bool
 validSuffixContent (' ' : remainder) = validSuffixContent remainder
@@ -66,7 +167,7 @@ checkSuffix :: (String, Json) -> StringErrorParseResult Json
 checkSuffix (suffix, json) = if validSuffixContent suffix then StringErrorParseSuccess json else StringErrorParseFailure (InvalidSuffixContent suffix)
 
 parseString :: String -> StringErrorParseResult Json
-parseString text = (expectValue text) >>= checkSuffix
+parseString text = expectValue text >>= checkSuffix
 
 expectValue :: String -> StringErrorParseResult (String, Json)
 expectValue "" = StringErrorParseFailure UnexpectedTermination
@@ -84,7 +185,7 @@ expectValue text = expectNumber text
 
 
 expectObject :: Bool -> M.HashMap JString Json -> String -> StringErrorParseResult (String, Json)
-expectObject _ _ "" = StringErrorParseFailure $ UnexpectedTermination
+expectObject _ _ "" = StringErrorParseFailure UnexpectedTermination
 expectObject _ fields ('}' : remainder) = StringErrorParseSuccess (remainder, fromObject $ JObject fields)
 expectObject first fields (' ' : remainder) = expectObject first fields remainder
 expectObject first fields ('\r' : remainder) = expectObject first fields remainder
@@ -100,7 +201,7 @@ expectObject first fields text =
 
 
 expectArray :: Bool -> V.Vector Json -> String -> StringErrorParseResult (String, Json)
-expectArray _ _ [] = StringErrorParseFailure $ UnexpectedTermination
+expectArray _ _ [] = StringErrorParseFailure UnexpectedTermination
 expectArray _ entries (']' : remainder) = StringErrorParseSuccess (remainder, fromArray $ JArray entries)
 expectArray first entries (' ' : remainder) = expectArray first entries remainder
 expectArray first entries ('\r' : remainder) = expectArray first entries remainder
@@ -114,8 +215,7 @@ expectArray first entries text =
 
 expectString :: String -> StringErrorParseResult (String, String)
 expectString text = do afterOpen <- expectStringBounds text
-                       afterString <- expectStringNoStartBounds afterOpen
-                       return afterString
+                       expectStringNoStartBounds afterOpen
 
 expectStringNoStartBounds :: String -> StringErrorParseResult (String, String)
 expectStringNoStartBounds text = do (remainder, textOfString) <- collectStringParts text []
@@ -142,13 +242,13 @@ collectStringParts ('\\' : 'u' : first : second : third : fourth : remainder) wo
                          invalidEscapeSequence = StringErrorParseFailure (InvalidEscapeSequence ('\\' : 'u' : first : second : third : fourth : remainder))
                          escapeSequenceValue = unicodeEscapeSequenceValue first second third fourth
                          isSurrogateLead = escapeSequenceValue >= 0xD800 && escapeSequenceValue <= 0xDBFF
-                         escapedChar = toEnum $ escapeSequenceValue
+                         escapedChar = toEnum escapeSequenceValue
                          surrogateResult = case remainder of
                             '\\' : 'u' : trailFirst : trailSecond : trailThird : trailFourth : trailRemainder ->
                               let validTrailHex = validUnicodeHex trailFirst trailSecond trailThird trailFourth
                                   trailEscapeSequenceValue = unicodeEscapeSequenceValue trailFirst trailSecond trailThird trailFourth
                                   isSurrogateTrail = trailEscapeSequenceValue >= 0xDC00 && trailEscapeSequenceValue <= 0xDFFF
-                                  surrogatePairChar = toEnum ((shiftL 10 $ escapeSequenceValue - 0xD800) + (trailEscapeSequenceValue - 0xDC00))
+                                  surrogatePairChar = toEnum ((shiftL 10 escapeSequenceValue - 0xD800) + (trailEscapeSequenceValue - 0xDC00))
                               in if validTrailHex && isSurrogateTrail then (collectStringParts trailRemainder (surrogatePairChar : workingString)) else invalidEscapeSequence
                             _ -> invalidEscapeSequence
                          validResult = if isSurrogateLead then surrogateResult else collectStringParts remainder (escapedChar : workingString)
@@ -184,4 +284,4 @@ expectNumber text =
                       parsedNumber = readMaybe numberPrefix
                       number = parsedNumber >>= fromDouble
                   in maybe (StringErrorParseFailure (InvalidNumberText numberPrefix)) (\n -> StringErrorParseSuccess (remainder, n)) number
-
+-}
