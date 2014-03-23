@@ -31,6 +31,7 @@ library
                                     mtl >=2.1.2,
                                     text >= 0.11.3.1,
                                     template-haskell >= 2.8.0.0,
+                                    bytestring >= 0.10.4.0,
                                     hashable >= 1.2.1.0
     ghc-options:                    -rtsopts
                                     -Wall
@@ -54,6 +55,7 @@ test-suite tests
                                     text >= 0.11.3.1,
                                     template-haskell >= 2.8.0.0,
                                     hashable >= 1.2.1.0,
+                                    bytestring >= 0.10.4.0,
                                     QuickCheck -any,
                                     hspec -any
     ghc-options:                    -rtsopts

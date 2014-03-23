@@ -8,9 +8,10 @@ import Data.Argonaut
 import Test.QuickCheck
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M
+import qualified Data.Text as T
 
 instance Arbitrary JString where
-  arbitrary = liftM JString arbitrary
+  arbitrary = liftM (JString . T.pack) arbitrary
 
 instance Arbitrary Json where
   arbitrary = genJsonDepthLimited 3

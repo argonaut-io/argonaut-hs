@@ -14,7 +14,7 @@ import Language.Haskell.TH
 buildEncodeDecodeTest :: [Name] -> Q Exp
 buildEncodeDecodeTest names = join $ fmap (\doStatements -> [|describe "encode/decode" $ $(doE $ fmap (noBindS . return) doStatements)|]) $
   traverse (\typeName -> [|
-    it ("for a " ++ $(stringE $ show typeName) ++ " decoding should mirror encoding") $ do
+    it ($(stringE $ show typeName) ++ " decoding should mirror encoding") $ do
       property $ \valueOfType ->
         let
           liftAndEncode = (encode :: Identity $(conT typeName) -> EitherStringEncodeResult Json) . return

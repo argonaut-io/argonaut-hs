@@ -23,6 +23,7 @@ module Data.Argonaut
     , fromJString
     , toString
     , fromString
+    , fromText
     , toDouble
     , fromDouble
     , toArray
@@ -63,8 +64,9 @@ import Data.Typeable(Typeable)
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M
 import Text.Printf
+import qualified Data.Text as T
 
-newtype JString = JString String deriving (Show, Eq, Typeable)
+newtype JString = JString T.Text deriving (Show, Eq, Typeable)
 
 instance Hashable JString where
   hashWithSalt salt (JString string) = hashWithSalt salt string
@@ -96,7 +98,7 @@ instance Show Json where
   show JsonNull             = "null"
 
 jsonStringShow :: JString -> String
-jsonStringShow (JString !string) = '"' : (L.foldr escapeAndPrependChar "\"" string)
+jsonStringShow (JString !text) = '"' : (L.foldr escapeAndPrependChar "\"" $ T.unpack text)
 
 escapeAndPrependChar :: Char -> String -> String
 escapeAndPrependChar '\r' !string = '\\' : 'r' : string
@@ -188,11 +190,14 @@ fromJString :: JString -> Json
 fromJString string = JsonString $ string
 
 toString :: Json -> Maybe String
-toString (JsonString (JString text)) = Just text
+toString (JsonString (JString text)) = Just $ T.unpack text
 toString _ = Nothing
 
 fromString :: String -> Json
-fromString string = JsonString $ JString string
+fromString string = JsonString $ JString $ T.pack string
+
+fromText :: T.Text -> Json
+fromText text = JsonString $ JString text
 
 toDouble :: Json -> Maybe Double
 toDouble (JsonNumber double) = Just double

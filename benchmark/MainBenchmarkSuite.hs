@@ -24,7 +24,7 @@ main = do jsonFilenames <- fmap (filter (isSuffixOf ".json")) $ getDirectoryCont
 benchmarks :: [(String, String, ByteString)] -> [Benchmark]
 benchmarks jsonChunks =
     [
-        (bgroup "Argonaut" $ fmap (\(name, json, _) -> bench name $ nf (fmap show $ ARP.parseString) json) jsonChunks)
+        (bgroup "Argonaut" $ fmap (\(name, json, _) -> bench name $ nf (\j -> show $ (ARP.parseText $ T.pack j)) json) jsonChunks)
       , (bgroup "Aeson" $ fmap (\(name, _, json) -> bench name $ nf (\j -> show $ (ATT.parse AEP.json j)) json) jsonChunks)
     ]
 
