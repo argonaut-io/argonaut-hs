@@ -7,3 +7,9 @@ argonaut.lkshs
 argonaut.lkshw
 tests.*
 argonaut-hs.sublime*
+*.aux
+*.hp
+*.prof
+*.ps
+*.csv
+

@@ -24,8 +24,8 @@ module Data.Argonaut
     , toString
     , fromString
     , fromText
-    , toDouble
-    , fromDouble
+    , toScientific
+    , fromScientific
     , toArray
     , fromArray
     , toObject
@@ -36,8 +36,8 @@ module Data.Argonaut
     , objectL
     , stringL
     , nullL
-    , fromDoubleToNumberOrNull
-    , fromDoubleToNumberOrString
+    , fromScientificToNumberOrNull
+    , fromScientificToNumberOrString
     , jsonTrue
     , jsonFalse
     , jsonZero
@@ -60,6 +60,7 @@ import Control.Applicative()
 import Data.Maybe
 import Data.Hashable(Hashable(..))
 import qualified Data.List as L
+import Data.Scientific (Scientific)
 import Data.Typeable(Typeable)
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M
@@ -84,7 +85,7 @@ runJArray (JArray values) = values
 data Json = JsonObject !JObject
           | JsonArray !JArray
           | JsonString !JString
-          | JsonNumber !Double
+          | JsonNumber !Scientific
           | JsonBool !Bool
           | JsonNull
           deriving (Eq, Typeable)
@@ -115,7 +116,7 @@ escapeAndPrependChar !char !string
    where
     !requiresEscaping    = char < '\x20'
 
-foldJson :: a -> (Bool -> a) -> (Double -> a) -> (JString -> a) -> (JArray -> a) -> (JObject -> a) -> Json -> a
+foldJson :: a -> (Bool -> a) -> (Scientific -> a) -> (JString -> a) -> (JArray -> a) -> (JObject -> a) -> Json -> a
 foldJson _ _ _ _ _ jsonObject (JsonObject value)  = jsonObject value
 foldJson _ _ _ _ jsonArray _ (JsonArray value)    = jsonArray value
 foldJson _ _ _ jsonString _ _ (JsonString value)  = jsonString value
@@ -131,7 +132,7 @@ foldJsonBool :: a -> (Bool -> a) -> Json -> a
 foldJsonBool _ valueTransform (JsonBool value) = valueTransform value
 foldJsonBool defaultValue _ _ = defaultValue
 
-foldJsonNumber :: a -> (Double -> a) -> Json -> a
+foldJsonNumber :: a -> (Scientific -> a) -> Json -> a
 foldJsonNumber _ valueTransform (JsonNumber value) = valueTransform value
 foldJsonNumber defaultValue _ _ = defaultValue
 
@@ -199,14 +200,12 @@ fromString string = JsonString $ JString $ T.pack string
 fromText :: T.Text -> Json
 fromText text = JsonString $ JString text
 
-toDouble :: Json -> Maybe Double
-toDouble (JsonNumber double) = Just double
-toDouble _ = Nothing
+toScientific :: Json -> Maybe Scientific
+toScientific (JsonNumber scientific) = Just scientific
+toScientific _ = Nothing
 
-fromDouble :: Double -> Maybe Json
-fromDouble double | isNaN double      = Nothing
-                  | isInfinite double = Nothing
-                  | otherwise         = Just (JsonNumber double)
+fromScientific :: Scientific -> Maybe Json
+fromScientific scientific = Just (JsonNumber scientific)
 
 toArray :: Json -> Maybe JArray
 toArray (JsonArray array) = Just array
@@ -232,8 +231,8 @@ fromUnit _ = JsonNull
 boolL :: Prism' Json Bool
 boolL = prism' fromBool toBool
 
-numberL :: Lens Json (Maybe Json) (Maybe Double) Double
-numberL = lens toDouble (const fromDouble)
+numberL :: Lens Json (Maybe Json) (Maybe Scientific) Scientific
+numberL = lens toScientific (const fromScientific)
 
 arrayL :: Prism' Json JArray
 arrayL = prism' fromArray toArray
@@ -247,11 +246,11 @@ stringL = prism' fromString toString
 nullL :: Prism' Json ()
 nullL = prism' fromUnit toUnit
 
-fromDoubleToNumberOrNull :: Double -> Json
-fromDoubleToNumberOrNull = fromMaybe JsonNull . fromDouble
+fromScientificToNumberOrNull :: Scientific -> Json
+fromScientificToNumberOrNull = fromMaybe JsonNull . fromScientific
 
-fromDoubleToNumberOrString :: Double -> Json
-fromDoubleToNumberOrString double = fromMaybe (fromString $ show double) (fromDouble double)
+fromScientificToNumberOrString :: Scientific -> Json
+fromScientificToNumberOrString scientific = fromMaybe (fromString $ show scientific) (fromScientific scientific)
 
 jsonTrue :: Json
 jsonTrue = JsonBool True

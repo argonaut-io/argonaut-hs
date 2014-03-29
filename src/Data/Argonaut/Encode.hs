@@ -10,6 +10,7 @@ module Data.Argonaut.Encode
 import Data.Traversable
 import Data.Argonaut
 import Data.Maybe()
+import Data.Scientific (Scientific)
 import Control.Monad.Identity
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M
@@ -28,8 +29,8 @@ instance EncodeJson Identity EitherStringEncodeResult JString where
 instance EncodeJson Identity EitherStringEncodeResult Bool where
   encodeJson = Right . fromBool . runIdentity
 
-instance EncodeJson Identity EitherStringEncodeResult Double where
-  encodeJson = fmap (maybe (Left "Invalid Double value.") Right) (fromDouble . runIdentity)
+instance EncodeJson Identity EitherStringEncodeResult Scientific where
+  encodeJson = fmap (maybe (Left "Invalid Scientific value.") Right) (fromScientific . runIdentity)
 
 instance EncodeJson Identity EitherStringEncodeResult JArray where
   encodeJson = Right . fromArray . runIdentity

@@ -3,12 +3,17 @@
 
 module Data.Argonaut.TestInstances where
 
+import Control.Applicative
 import Control.Monad
 import Data.Argonaut
+import Data.Scientific
 import Test.QuickCheck
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M
 import qualified Data.Text as T
+
+instance Arbitrary Scientific where
+  arbitrary = genScientific
 
 instance Arbitrary JString where
   arbitrary = liftM (JString . T.pack) arbitrary
@@ -28,8 +33,11 @@ genJsonObject = liftM fromObject arbitrary
 genJsonArray :: Gen Json
 genJsonArray = liftM fromArray arbitrary
 
+genScientific :: Gen Scientific
+genScientific = pure scientific <*> arbitrary <*> arbitrary
+
 genJsonNumber :: Gen Json
-genJsonNumber = liftM fromDoubleToNumberOrNull arbitrary
+genJsonNumber = liftM fromScientificToNumberOrNull $ genScientific
 
 genJsonString :: Gen Json
 genJsonString = liftM fromString arbitrary

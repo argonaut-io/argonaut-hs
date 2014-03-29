@@ -10,7 +10,7 @@ module Data.Argonaut.Decode
 import Data.Traversable
 import Data.Argonaut
 import Data.Maybe()
---import Control.Monad
+import Data.Scientific (Scientific)
 import Control.Monad.Identity
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M
@@ -29,7 +29,7 @@ instance DecodeJson Identity EitherStringDecodeResult JString where
 instance DecodeJson Identity EitherStringDecodeResult Bool where
   decodeJson = foldJsonBool (Left "Not a Bool.") Right . runIdentity
 
-instance DecodeJson Identity EitherStringDecodeResult Double where
+instance DecodeJson Identity EitherStringDecodeResult Scientific where
   decodeJson = foldJsonNumber (Left "Not a Number.") Right . runIdentity
 
 instance DecodeJson Identity EitherStringDecodeResult JArray where

@@ -32,7 +32,8 @@ library
                                     text >= 0.11.3.1,
                                     template-haskell >= 2.8.0.0,
                                     bytestring >= 0.10.4.0,
-                                    hashable >= 1.2.1.0
+                                    hashable >= 1.2.1.0,
+                                    scientific >= 0.2.0.2
     ghc-options:                    -rtsopts
                                     -Wall
                                     -O2
@@ -56,6 +57,8 @@ test-suite tests
                                     template-haskell >= 2.8.0.0,
                                     hashable >= 1.2.1.0,
                                     bytestring >= 0.10.4.0,
+                                    scientific >= 0.2.0.2,
+                                    argonaut,
                                     QuickCheck -any,
                                     hspec -any
     ghc-options:                    -rtsopts
@@ -67,13 +70,11 @@ test-suite tests
     buildable:                      True
     default-language:               Haskell2010
     default-extensions:             TemplateHaskell
-    hs-source-dirs:                 src
-                                    test
+    hs-source-dirs:                 test
 
 benchmark argonaut-bench
     type:                           exitcode-stdio-1.0
-    hs-source-dirs:                 src
-                                    benchmark
+    hs-source-dirs:                 benchmark
     buildable:                      True
     default-language:               Haskell2010
     default-extensions:             TemplateHaskell
@@ -85,12 +86,14 @@ benchmark argonaut-bench
                                     mtl >=2.1.2,
                                     criterion >= 0.8.0.0,
                                     directory >= 1.2.0.1,
-                                    aeson >= 0.7.0.1,
+                                    aeson >= 0.7.0.2,
                                     text >= 0.11.3.1,
                                     template-haskell >= 2.8.0.0,
                                     hashable >= 1.2.1.0,
                                     bytestring >= 0.10.4.0,
-                                    attoparsec >= 0.10.4.0
+                                    scientific >= 0.2.0.2,
+                                    attoparsec >= 0.10.4.0,
+                                    argonaut
     ghc-options:                    -rtsopts
                                     -Wall
                                     -O2

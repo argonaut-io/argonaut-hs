@@ -3,7 +3,6 @@
 module Data.Argonaut.ParserSpec where
 
 import qualified Data.Text as T
-import Data.Argonaut
 import Data.Argonaut.Parser
 import Data.Argonaut.TestInstances()
 import Test.Hspec
@@ -17,4 +16,4 @@ spec = do
         let
           asString = show originalJson
           parsedJson = parseText $ T.pack asString
-        in parsedJson `shouldBe` (TextErrorParseSuccess originalJson)
+        in parsedJson `shouldBe` (ParseSuccess originalJson)
