@@ -25,10 +25,10 @@ main = do jsonFilenames <- fmap (filter (isSuffixOf ".json")) $ getDirectoryCont
 benchmarks :: [(String, ByteString)] -> [Benchmark]
 benchmarks jsonChunks = fmap (\(name, json) -> 
     bcompare [
-        (bgroup "Aeson" $ [bench name $ nf (\j -> show $ (ATT.parse AEP.json j)) json])
+        (bgroup "Aeson" $ [bench name $ nf (\j -> show $ (ATT.parse AEP.json' j)) json])
       , (bgroup "Argonaut" $ [bench name $ nf (\j -> show $ (ARP.parseByteString j)) json])
     ]
-  ) (filter (\(name, _) -> isInfixOf "twitter100" name) jsonChunks)
+  ) jsonChunks--(filter (\(name, _) -> isInfixOf "twitter100" name) jsonChunks)
 
 benchConfig :: Config
 benchConfig = defaultConfig {
