@@ -26,10 +26,12 @@ toByteString = TE.encodeUtf8 . T.pack
 main :: IO ()
 main = do jsonFilenames <- fmap (filter (isSuffixOf ".json")) $ getDirectoryContents jsonDataDir
           jsonChunks <- traverse (\filename -> fmap (\contents -> (filename, toByteString contents)) $ readFile (jsonDataDir ++ filename)) jsonFilenames
+          {-
           _ <- traverse (\(name, bytes) -> do putStrLn name
                                               print (foldMap (Sum . length . show . ARP.parseByteString) (fmap (\_ -> bytes) [1..50]))) jsonChunks
           return ()
-          --defaultMainWith benchConfig (return ()) $ benchmarks jsonChunks
+          -}
+          defaultMainWith benchConfig (return ()) $ benchmarks jsonChunks
 
 benchmarks :: [(String, ByteString)] -> [Benchmark]
 benchmarks jsonChunks = fmap (\(name, json) -> 
