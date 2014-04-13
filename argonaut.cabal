@@ -30,6 +30,7 @@ library
                                     lens >=3.10,
                                     mtl >=2.1.2,
                                     text >= 0.11.3.1,
+                                    attoparsec >=0.11.2.1,
                                     template-haskell >= 2.8.0.0,
                                     bytestring >= 0.10.4.0,
                                     hashable >= 1.2.1.0,
@@ -39,12 +40,14 @@ library
                                     -O2
     exposed-modules:                Data.Argonaut
                                     Data.Argonaut.Parser
+                                    Data.Argonaut.Printer
                                     Data.Argonaut.Encode
                                     Data.Argonaut.Decode
     exposed:                        True
     buildable:                      True
     default-language:               Haskell2010
     default-extensions:             TemplateHaskell
+                                    CPP
     hs-source-dirs:                 src
 
 test-suite tests
@@ -54,6 +57,7 @@ test-suite tests
                                     lens >=3.10,
                                     mtl >=2.1.2,
                                     text >= 0.11.3.1,
+                                    attoparsec >=0.11.2.1,
                                     template-haskell >= 2.8.0.0,
                                     hashable >= 1.2.1.0,
                                     bytestring >= 0.10.4.0,
@@ -70,6 +74,7 @@ test-suite tests
     buildable:                      True
     default-language:               Haskell2010
     default-extensions:             TemplateHaskell
+                                    CPP
     hs-source-dirs:                 test
 
 benchmark argonaut-bench
@@ -78,6 +83,7 @@ benchmark argonaut-bench
     buildable:                      True
     default-language:               Haskell2010
     default-extensions:             TemplateHaskell
+                                    CPP
     main-is:                        MainBenchmarkSuite.hs
     build-depends:                  base ==4.*,
                                     unordered-containers >=0.2.2.3,
@@ -88,6 +94,7 @@ benchmark argonaut-bench
                                     directory >= 1.2.0.1,
                                     aeson >= 0.7.0.2,
                                     text >= 0.11.3.1,
+                                    attoparsec >=0.11.2.1,
                                     template-haskell >= 2.8.0.0,
                                     hashable >= 1.2.1.0,
                                     bytestring >= 0.10.4.0,

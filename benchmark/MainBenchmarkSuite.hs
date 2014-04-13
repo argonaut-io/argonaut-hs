@@ -11,6 +11,7 @@ import Data.ByteString(ByteString)
 import Data.List
 import Data.Traversable
 import qualified Data.Argonaut.Parser as ARP
+import Data.Argonaut.Printer()
 import qualified Data.Aeson.Parser as AEP
 import Criterion
 import Criterion.Config

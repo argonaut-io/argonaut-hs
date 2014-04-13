@@ -14,76 +14,47 @@ module Data.Argonaut.Parser
     , parseText
     , parseByteString
     , ParseResult(..)
+    , jsonValidSuffix
+    , jsonEOF
 ) where
 
-import Data.List
 import Data.Bits
 import Data.Word
-import Data.Maybe
 import Data.Monoid
+import Data.Char (chr)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Unsafe as BU
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString.Builder as BSB
 import Data.Argonaut
-import Data.Argonaut.Templates
 import Control.Monad.Identity
-import Text.Read
-import Data.Typeable(Typeable)
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import Data.Argonaut.Templates()
-import Debug.Trace
+import qualified Data.Attoparsec.ByteString as AB
+import qualified Data.Attoparsec as A
+import qualified Data.Attoparsec.Lazy as L
+import qualified Data.Attoparsec.Zepto as Z
+import Control.Applicative ((*>), (<$>), (<*), liftA2, pure)
+import qualified Data.Attoparsec.Char8 as AC
 
-$(buildWord8s [
-    ("forwardSlash", 47)
-  , ("backSlash", 92)
-  , ("closeCurly", 125)
-  , ("closeSquare", 93)
-  , ("comma", 44)
-  , ("doubleQuote", 34)
-  , ("openCurly", 123)
-  , ("openSquare", 91)
-  , ("plus", 43)
-  , ("hyphen", 45)
-  , ("fullStop", 46)
-  , ("zero", 48)
-  , ("one", 49)
-  , ("two", 50)
-  , ("three", 51)
-  , ("four", 52)
-  , ("five", 53)
-  , ("six", 54)
-  , ("seven", 55)
-  , ("eight", 56)
-  , ("nine", 57)
-  , ("upperA", 65)
-  , ("upperE", 69)
-  , ("upperF", 70)
-  , ("lowerA", 97)
-  , ("lowerB", 98)
-  , ("lowerE", 101)
-  , ("lowerF", 102)
-  , ("lowerN", 110)
-  , ("lowerR", 114)
-  , ("lowerT", 116)
-  , ("lowerU", 117)
-  , ("tab", 9)
-  , ("space", 32)
-  , ("carriageReturn", 13)
-  , ("newLine", 10)
-  , ("colon", 58)])
-
-trueByteString :: B.ByteString
-trueByteString = TE.encodeUtf8 "true"
-
-falseByteString :: B.ByteString
-falseByteString = TE.encodeUtf8 "false"
-
-nullByteString :: B.ByteString
-nullByteString = TE.encodeUtf8 "null"
+#define BACKSLASH 92
+#define CLOSE_CURLY 125
+#define CLOSE_SQUARE 93
+#define COMMA 44
+#define DOUBLE_QUOTE 34
+#define OPEN_CURLY 123
+#define OPEN_SQUARE 91
+#define C_0 48
+#define C_9 57
+#define C_A 65
+#define C_F 70
+#define C_a 97
+#define C_f 102
+#define C_n 110
+#define C_t 116
 
 class Parser m n a | m a -> n where
   parseJson :: m a -> n Json
@@ -91,19 +62,11 @@ class Parser m n a | m a -> n where
 parse :: Parser m n a => m a -> n Json
 parse = parseJson
 
-data ParseError = UnexpectedTermination
-                | InvalidSuffixContent !T.Text
-                | UnexpectedContent !T.Text
-                | InvalidNumberText !T.Text
-                | InvalidEscapeSequence !T.Text
-                | ExpectedToken !T.Text !T.Text
-                deriving (Eq, Show, Typeable)
-
 newtype ParserInputByteString = ParserInputByteString {runInputByteString :: B.ByteString} deriving (Eq, Ord, Show)
 
 newtype ParserInputText = ParserInputText {runInputText :: T.Text} deriving (Eq, Ord, Show)
 
-data ParseResult a = ParseFailure !ParseError | ParseSuccess !a deriving (Eq, Show)
+data ParseResult a = ParseFailure !String | ParseSuccess !a deriving (Eq, Show)
 
 instance Functor ParseResult where
   fmap _ (ParseFailure x)  = ParseFailure x
@@ -120,317 +83,146 @@ instance Parser Identity ParseResult ParserInputByteString where
 instance Parser Identity ParseResult ParserInputText where
   parseJson (Identity json) = parseText $ runInputText json
 
-excerpt :: B.ByteString -> B.ByteString
-excerpt !bytestring = B.take 30 bytestring
-{-# INLINE excerpt #-}
-
-unexpectedContent :: B.ByteString -> ParseResult a
-unexpectedContent !bytestring = ParseFailure $ UnexpectedContent $ T.pack $ show $ excerpt bytestring
-{-# INLINE unexpectedContent #-}
-
-isSkipChar :: Word8 -> Bool
-isSkipChar !word = {-# SCC isSkipChar #-} word == spaceChar || word == tabChar || word == carriageReturnChar || word == newLineChar
-{-# INLINE isSkipChar #-}
-
-charsAtStart :: [Word8] -> B.ByteString -> Bool
-charsAtStart !chars !bytestring = {-# SCC charsAtStart #-}
-  if B.null bytestring then False else ((BU.unsafeIndex bytestring 0) `elem` chars)
-{-# INLINE charsAtStart #-}
-
-singleCharAtStart :: Word8 -> B.ByteString -> Bool
-singleCharAtStart !char = charsAtStart [char]
-
-skipSkipChars :: B.ByteString -> (B.ByteString -> a) -> a
-skipSkipChars !bytestring !action = 
-  let !newByteString = B.dropWhile isSkipChar bytestring
-  in  {-# SCC skipSkipChars #-} action newByteString
-{-# INLINE skipSkipChars #-}
-
-validSuffixContent :: B.ByteString -> Bool
-validSuffixContent !bytestring = skipSkipChars bytestring B.null
-{-# INLINE validSuffixContent #-}
-
-parseByteString :: B.ByteString -> ParseResult Json
-parseByteString bytestring =
-  let value       = expectValue bytestring
-      result      = value >>= (\(remainder, json) -> if validSuffixContent remainder then ParseSuccess json else ParseFailure $ InvalidSuffixContent $ T.pack $ show $ excerpt remainder)
-  in  {-# SCC parseByteString #-} result
-
 parseText :: T.Text -> ParseResult Json
 parseText text = parseByteString $ TE.encodeUtf8 text
 
-isPrefix :: Json -> B.ByteString -> B.ByteString -> ParseResult (B.ByteString, Json)
-isPrefix value possiblePrefix bytestring | B.isPrefixOf possiblePrefix bytestring = ParseSuccess (B.drop (B.length possiblePrefix) bytestring, value)
-isPrefix _ _ bytestring                                                           = unexpectedContent bytestring
-{-# INLINE isPrefix #-}
+parseByteString :: B.ByteString -> ParseResult Json
+parseByteString bytestring = case AB.parseOnly jsonValidSuffix bytestring of
+  Left failMessage      -> ParseFailure failMessage
+  Right result          -> ParseSuccess result
 
+objectParser :: A.Parser Json
+objectParser = do
+  !vals <- objectValuesParser quotedStringParser valueParser
+  return (fromObject vals)
 
+objectValuesParser :: A.Parser T.Text -> A.Parser Json -> A.Parser (M.HashMap JString Json)
+objectValuesParser str val = do
+  AC.skipSpace
+  let pair = liftA2 (,) (str <* AC.skipSpace) (AC.char ':' *> AC.skipSpace *> val)
+  M.fromList <$> commaSeparated pair CLOSE_CURLY
+{-# INLINE objectValuesParser #-}
 
--- TODO: Parsing, encoding and decoding is actually just encoding...
+arrayParser :: A.Parser Json
+arrayParser = do
+  !vals <- arrayValuesParser valueParser
+  return (fromArray vals)
 
-remainderAndTextToRemainderAndJson :: (B.ByteString, T.Text) -> (B.ByteString, Json)
-remainderAndTextToRemainderAndJson (remainder, text) = (remainder, fromText text)
-{-# INLINE remainderAndTextToRemainderAndJson #-}
+commaSeparated :: A.Parser a -> Word8 -> A.Parser [a]
+commaSeparated item endByte = do
+  w <- L.peekWord8'
+  if w == endByte
+    then A.anyWord8 >> return []
+    else loop
+  where
+    loop = do
+      v <- item <* AC.skipSpace
+      ch <- A.satisfy $ \w -> w == COMMA || w == endByte
+      if ch == COMMA
+        then AC.skipSpace >> (v:) <$> loop
+        else return [v]
+{-# INLINE commaSeparated #-}
 
-expectValue :: B.ByteString -> ParseResult (B.ByteString, Json)
-expectValue bytestring        = 
-  let !isEmpty                = B.null bytestring
-      !unexpectedTermination  = ParseFailure $ UnexpectedTermination
-      !word                   = BU.unsafeIndex bytestring 0
-      !indexResult            = case () of _
-                                            | word == openSquareChar        -> expectArray True (BU.unsafeTail bytestring) []
-                                            | word == openCurlyChar         -> expectObject True (BU.unsafeTail bytestring) M.empty
-                                            | word == doubleQuoteChar       -> {-# SCC expectValue_string #-} fmap remainderAndTextToRemainderAndJson $ expectStringNoStartBounds (BU.unsafeTail bytestring)
-                                            | word == lowerTChar            -> isPrefix jsonTrue trueByteString bytestring
-                                            | word == lowerFChar            -> isPrefix jsonFalse falseByteString bytestring
-                                            | word == lowerNChar            -> isPrefix jsonNull nullByteString bytestring
-                                            | word == spaceChar             -> expectValue (BU.unsafeTail bytestring)
-                                            | word == carriageReturnChar    -> expectValue (BU.unsafeTail bytestring)
-                                            | word == newLineChar           -> expectValue (BU.unsafeTail bytestring)
-                                            | word == tabChar               -> expectValue (BU.unsafeTail bytestring)
-                                            | otherwise                     -> expectNumber bytestring
-  in  {-# SCC expectValue #-} if (isEmpty) then unexpectedTermination else indexResult
+arrayValuesParser :: A.Parser Json -> A.Parser (V.Vector Json)
+arrayValuesParser val = do
+  AC.skipSpace
+  V.fromList <$> commaSeparated val CLOSE_SQUARE
+{-# INLINE arrayValuesParser #-}
 
-expectArray :: Bool -> B.ByteString -> [Json] -> ParseResult (B.ByteString, Json)
-expectArray !first !bytestring !elements = {-# SCC expectArray #-} skipSkipChars bytestring (\bytes ->
-                                                                       if singleCharAtStart closeSquareChar bytes
-                                                                       then ParseSuccess (BU.unsafeTail bytes, fromArray $ JArray $ V.fromList $ reverse elements) 
-                                                                       else do afterSeparator <- if first then ParseSuccess bytes else expectEntrySeparator bytes
-                                                                               (afterValue, value) <- expectValue afterSeparator
-                                                                               expectArray False afterValue $ {-# SCC expectArray_add #-} (value : elements)
-                                                                       )
+valueParser :: A.Parser Json
+valueParser = do
+  w <- L.peekWord8'
+  case w of
+    DOUBLE_QUOTE -> do
+                     !s <- A.anyWord8 *> stringWithoutLeadingQuoteParser
+                     return (fromText s)
+    OPEN_CURLY -> A.anyWord8 *> objectParser
+    OPEN_SQUARE -> A.anyWord8 *> arrayParser
+    C_f -> AC.string "false" *> pure jsonFalse
+    C_t -> AC.string "true" *> pure jsonTrue
+    C_n -> AC.string "null" *> pure jsonNull
+    _ | w >= 48 && w <= 57 || w == 45
+                  -> do
+                     !n <- AC.rational
+                     return (fromScientific n)
+      | otherwise -> fail "not a valid json value"
 
+-- | Parse a quoted JSON string.
+quotedStringParser :: A.Parser T.Text
+quotedStringParser = A.word8 DOUBLE_QUOTE *> stringWithoutLeadingQuoteParser
 
-expectObject :: Bool -> B.ByteString -> M.HashMap JString Json -> ParseResult (B.ByteString, Json)
-expectObject !first !bytestring !elements = {-# SCC expectObject #-} skipSkipChars bytestring (\bytes ->
-                                                                       if singleCharAtStart closeCurlyChar bytes
-                                                                       then ParseSuccess (BU.unsafeTail bytes, fromObject $ JObject elements) 
-                                                                       else do afterEntrySeparator <- if first then ParseSuccess bytes else expectEntrySeparator bytes
-                                                                               (afterKey, key) <- expectString afterEntrySeparator
-                                                                               afterFieldSeparator <- expectFieldSeparator afterKey
-                                                                               (afterValue, value) <- expectValue afterFieldSeparator
-                                                                               expectObject False afterValue $ {-# SCC expectObject_add #-} (M.insert (JString key) value elements)
-                                                                       )
+-- | Parse a string without a leading quote.
+stringWithoutLeadingQuoteParser :: A.Parser T.Text
+stringWithoutLeadingQuoteParser = do
+  s <- A.scan False $ \s c -> if s then Just False
+                                   else if c == DOUBLE_QUOTE
+                                        then Nothing
+                                        else Just (c == BACKSLASH)
+  _ <- A.word8 DOUBLE_QUOTE
+  s1 <- if BACKSLASH `B.elem` s
+        then case Z.parse unescape s of
+            Right r -> return r
+            Left err -> fail err
+         else return s
 
-expectString :: B.ByteString -> ParseResult (B.ByteString, T.Text)
-expectString !bytestring = {-# SCC expectString #-} do afterOpen <- expectStringBounds bytestring
-                                                       expectStringNoStartBounds afterOpen
+  case TE.decodeUtf8' s1 of
+      Right r -> return r
+      Left err -> fail $ show err
 
-expectStringNoStartBounds :: B.ByteString -> ParseResult (B.ByteString, T.Text)
-expectStringNoStartBounds = collectStringParts NoStringParts
-{-# INLINE expectStringNoStartBounds #-}
+unescape :: Z.Parser B.ByteString
+unescape = toByteString <$> go mempty where
+  go acc = do
+    h <- Z.takeWhile (/=BACKSLASH)
+    let rest = do
+          start <- Z.take 2
+          let !slash = BU.unsafeHead start
+              !t = BU.unsafeIndex start 1
+              escape = case B.findIndex (==t) "\"\\/ntbrfu" of
+                         Just i -> i
+                         _ -> 255
+          if slash /= BACKSLASH || escape == 255
+            then fail "invalid JSON escape sequence"
+            else do
+            let cont m = go (acc `mappend` BSB.byteString h `mappend` m)
+                {-# INLINE cont #-}
+            if t /= 117 -- 'u'
+              then cont (BSB.word8 (BU.unsafeIndex mapping escape))
+              else do
+                   a <- hexQuad
+                   if a < 0xd800 || a > 0xdfff
+                     then cont (BSB.charUtf8 (chr a))
+                     else do
+                       b <- Z.string "\\u" *> hexQuad
+                       if a <= 0xdbff && b >= 0xdc00 && b <= 0xdfff
+                         then let !c = ((a - 0xd800) `shiftL` 10) +
+                                       (b - 0xdc00) + 0x10000
+                              in cont (BSB.charUtf8 (chr c))
+                         else fail "invalid UTF-16 surrogates"
+    done <- Z.atEnd
+    if done
+      then return (acc `mappend` BSB.byteString h)
+      else rest
+  mapping = "\"\\/\n\t\b\r\f"
 
-expectSpacerToken :: Word8 -> T.Text -> B.ByteString -> ParseResult B.ByteString
-expectSpacerToken !expectedToken failMessage !bytestring = skipSkipChars bytestring (\bytes ->
-  if singleCharAtStart expectedToken bytes
-  then ParseSuccess (BU.unsafeTail bytes)
-  else ParseFailure (ExpectedToken (T.pack $ show expectedToken) failMessage)
-  )
-{-# INLINE expectSpacerToken #-}
+hexQuad :: Z.Parser Int
+hexQuad = do
+  s <- Z.take 4
+  let hex n | w >= C_0 && w <= C_9 = w - C_0
+            | w >= C_a && w <= C_f = w - 87
+            | w >= C_A && w <= C_F = w - 55
+            | otherwise = 255
+        where w = fromIntegral $ BU.unsafeIndex s n
+      a = hex 0; b = hex 1; c = hex 2; d = hex 3
+  if (a .|. b .|. c .|. d) /= 255
+    then return $! d .|. (c `shiftL` 4) .|. (b `shiftL` 8) .|. (a `shiftL` 12)
+    else fail "invalid hex escape"
 
-expectEntrySeparator :: B.ByteString -> ParseResult B.ByteString
-expectEntrySeparator = expectSpacerToken commaChar "Expected entry separator."
-{-# INLINE expectEntrySeparator #-}
+jsonValidSuffix :: A.Parser Json
+jsonValidSuffix = valueParser <* AC.skipSpace
 
-expectStringBounds :: B.ByteString -> ParseResult B.ByteString
-expectStringBounds = expectSpacerToken doubleQuoteChar "Expected string bounds."
-{-# INLINE expectStringBounds #-}
+jsonEOF :: A.Parser Json
+jsonEOF = jsonValidSuffix <* AC.endOfInput
 
-expectFieldSeparator :: B.ByteString -> ParseResult B.ByteString
-expectFieldSeparator = expectSpacerToken colonChar "Expected field separator."
-{-# INLINE expectFieldSeparator #-}
-
-data StringParts = StringPartsFromBuilder BSB.Builder | StringPartsFromByteString B.ByteString | NoStringParts
-
-createTextFromStringParts :: StringParts -> T.Text
-createTextFromStringParts (StringPartsFromBuilder builder)        = TE.decodeUtf8 $ LB.toStrict $ BSB.toLazyByteString builder
-createTextFromStringParts (StringPartsFromByteString bytestring)  = TE.decodeUtf8 $ bytestring
-createTextFromStringParts NoStringParts                           = ""
-{-# INLINE createTextFromStringParts #-}
-
-appendByteStringToStringParts :: StringParts -> B.ByteString -> StringParts
-appendByteStringToStringParts (StringPartsFromBuilder builder) toAppend       = StringPartsFromBuilder (builder `mappend` BSB.byteString toAppend)
-appendByteStringToStringParts (StringPartsFromByteString bytestring) toAppend = StringPartsFromBuilder (mempty `mappend` BSB.byteString bytestring `mappend` BSB.byteString toAppend)
-appendByteStringToStringParts NoStringParts toAppend                          = StringPartsFromByteString toAppend
-{-# INLINE appendByteStringToStringParts #-}
-
-appendCharToStringParts :: StringParts -> Char -> StringParts
-appendCharToStringParts (StringPartsFromBuilder builder) toAppend       = StringPartsFromBuilder (builder `mappend` BSB.charUtf8 toAppend)
-appendCharToStringParts (StringPartsFromByteString bytestring) toAppend = StringPartsFromBuilder (mempty `mappend` BSB.byteString bytestring `mappend` BSB.charUtf8 toAppend)
-appendCharToStringParts NoStringParts toAppend                          = StringPartsFromBuilder (mempty `mappend` BSB.charUtf8 toAppend)
-{-# INLINE appendCharToStringParts #-}
-
-invalidEscapeSequenceParseError :: B.ByteString -> ParseError
-invalidEscapeSequenceParseError !bytestring = InvalidEscapeSequence $ T.pack $ show $ excerpt bytestring
-{-# INLINE invalidEscapeSequenceParseError #-}
-
-invalidEscapeSequence :: B.ByteString -> ParseResult a
-invalidEscapeSequence !bytestring = ParseFailure $ invalidEscapeSequenceParseError bytestring
-{-# INLINE invalidEscapeSequence #-}
-
-data EscapedCharResult a = EscapedCharNotFound | EscapedCharParseError ParseError | EscapedCharFound a
-
-getUnicodeEscapeAtStart :: B.ByteString -> EscapedCharResult Int
-getUnicodeEscapeAtStart !bytestring | B.length bytestring < 6                           = EscapedCharNotFound
-getUnicodeEscapeAtStart !bytestring | BU.unsafeIndex bytestring 0 /= backSlashChar      = EscapedCharNotFound
-getUnicodeEscapeAtStart !bytestring | BU.unsafeIndex bytestring 1 /= lowerUChar         = EscapedCharNotFound
-getUnicodeEscapeAtStart !bytestring                                                     =
-  let !first                = BU.unsafeIndex bytestring 2
-      !second               = BU.unsafeIndex bytestring 3
-      !third                = BU.unsafeIndex bytestring 4
-      !fourth               = BU.unsafeIndex bytestring 5
-      !validHex             = validUnicodeHex first second third fourth
-      !escapeSequenceValue  = unicodeEscapeSequenceValue first second third fourth
-  in  {-# SCC getUnicodeEscapeAtStart #-} if validHex then EscapedCharFound escapeSequenceValue else EscapedCharParseError $ invalidEscapeSequenceParseError bytestring
-{-# INLINE getUnicodeEscapeAtStart #-}
-
-getEscapedCharAtStart :: B.ByteString -> EscapedCharResult Char
-getEscapedCharAtStart !bytestring | B.length bytestring < 2                           = EscapedCharNotFound
-getEscapedCharAtStart !bytestring | BU.unsafeIndex bytestring 0 /= backSlashChar      = EscapedCharNotFound
-getEscapedCharAtStart !bytestring                                                     =
-  let !char = BU.unsafeIndex bytestring 1
-      !result = case char of _
-                              | char == lowerRChar         -> EscapedCharFound '\r'
-                              | char == lowerNChar         -> EscapedCharFound '\n'
-                              | char == lowerTChar         -> EscapedCharFound '\t'
-                              | char == lowerBChar         -> EscapedCharFound '\b'
-                              | char == lowerFChar         -> EscapedCharFound '\f'
-                              | char == backSlashChar      -> EscapedCharFound '\\'
-                              | char == forwardSlashChar   -> EscapedCharFound '/'
-                              | char == doubleQuoteChar    -> EscapedCharFound '"'
-                              | otherwise                  -> EscapedCharParseError $ invalidEscapeSequenceParseError bytestring
-  in  result
-{-# INLINE getEscapedCharAtStart #-}
-
-collectStringParts :: StringParts -> B.ByteString -> ParseResult (B.ByteString, T.Text)
-collectStringParts _      !bytestring | B.null bytestring     = ParseFailure $ UnexpectedTermination
-collectStringParts !parts !bytestring                         =
-  let firstChar  = BU.unsafeIndex bytestring 0
-      result     = case () of _
-                                | firstChar == doubleQuoteChar  -> {-# SCC collectStringParts_doubleQuoteChar #-} ParseSuccess (BU.unsafeTail bytestring, createTextFromStringParts parts)
-                                | firstChar == backSlashChar    -> {-# SCC collectStringParts_lead #-} case getUnicodeEscapeAtStart bytestring of 
-                                                                  EscapedCharParseError failureReason       -> ParseFailure failureReason
-                                                                  EscapedCharFound escapeSequenceValue      ->
-                                                                    let !isSurrogateLead = {-# SCC collectStringParts_lead_isSurrogateLead #-} escapeSequenceValue >= 0xD800 && escapeSequenceValue <= 0xDBFF
-                                                                        escapedChar = {-# SCC collectStringParts_lead_escapedChar #-} toEnum escapeSequenceValue
-                                                                        surrogateResult = {-# SCC collectStringParts_trail #-} case getUnicodeEscapeAtStart $ B.drop 6 bytestring of
-                                                                          EscapedCharParseError failureReason                                                                       -> ParseFailure failureReason
-                                                                          EscapedCharFound surrogateEscapeValue | surrogateEscapeValue >= 0xDC00 && surrogateEscapeValue <= 0xDFFF  -> 
-                                                                            let !surrogatePairChar = toEnum ((shiftL 10 escapeSequenceValue - 0xD800) + (surrogateEscapeValue - 0xDC00))
-                                                                            in  collectStringParts (appendCharToStringParts parts surrogatePairChar) $ B.drop 12 bytestring
-                                                                          _                                                                                                         -> invalidEscapeSequence bytestring
-                                                                     in {-# SCC collectStringParts_unicode_result #-} if isSurrogateLead then surrogateResult else {-# SCC collectStringParts_lead_append #-} collectStringParts (appendCharToStringParts parts escapedChar) $ B.drop 6 bytestring
-                                                                  EscapedCharNotFound                       -> {-# SCC collectStringParts_getEscapedCharAtStart #-} case getEscapedCharAtStart bytestring of 
-                                                                                                                EscapedCharFound char         -> collectStringParts (appendCharToStringParts parts char) $ BU.unsafeDrop 2 bytestring
-                                                                                                                EscapedCharParseError failure -> ParseFailure failure
-                                                                                                                EscapedCharNotFound           -> invalidEscapeSequence bytestring
-                                | otherwise                     -> let (!text, !remainder) = B.span isNormalStringElement bytestring
-                                                                   in  collectStringParts (appendByteStringToStringParts parts text) remainder
-  in  result
-
-isNormalStringElement :: Word8 -> Bool
-isNormalStringElement !word = word /= doubleQuoteChar && word /= backSlashChar
-{-# INLINE isNormalStringElement #-}
-
-isHexDigit :: Word8 -> Bool
-isHexDigit !word = (word >= lowerAChar && word <= lowerFChar) || (word >= upperAChar && word <= upperFChar) || (word >= zeroChar && word <= nineChar)
-{-# INLINE isHexDigit #-}
-
-shiftToHexDigit :: Word8 -> Int
-shiftToHexDigit !word | word >= upperAChar && word <= upperFChar  = fromIntegral (word - upperAChar + 10)
-shiftToHexDigit !word | word >= lowerAChar && word <= lowerFChar  = fromIntegral (word - lowerAChar + 10)
-shiftToHexDigit !word | word >= zeroChar && word <= nineChar      = fromIntegral (word - zeroChar)
-shiftToHexDigit _                                                 = error "shiftToHexDigit used incorrectly."
-{-# INLINE shiftToHexDigit #-}
-
-validUnicodeHex :: Word8 -> Word8 -> Word8 -> Word8 -> Bool
-validUnicodeHex !first !second !third !fourth = isHexDigit first && isHexDigit second && isHexDigit third && isHexDigit fourth
-{-# INLINE validUnicodeHex #-}
-
-unicodeEscapeSequenceValue :: Word8 -> Word8 -> Word8 -> Word8 -> Int
-unicodeEscapeSequenceValue !first !second !third !fourth =
-    let !firstValue    = (shiftToHexDigit first) `shiftL` 12
-        !secondValue   = (shiftToHexDigit second) `shiftL` 8
-        !thirdValue    = (shiftToHexDigit third) `shiftL` 4
-        !fourthValue   = shiftToHexDigit fourth
-    in  {-# SCC unicodeEscapeSequenceValue #-} firstValue .|. secondValue .|. thirdValue .|. fourthValue
-{-# INLINE unicodeEscapeSequenceValue #-}
-
-wordNumberToInteger :: Word8 -> Integer
-wordNumberToInteger !word = fromIntegral $ word - 48
-{-# INLINE wordNumberToInteger #-}
-
-wordIsNumber :: Word8 -> Bool
-wordIsNumber !word = word >= zeroChar && word <= nineChar
-{-# INLINE wordIsNumber #-}
-
-wordIsHyphen :: Word8 -> Bool
-wordIsHyphen !word = word == hyphenChar
-{-# INLINE wordIsHyphen #-}
-
-wordIsHyphenOrPlus :: Word8 -> Bool
-wordIsHyphenOrPlus !word = word == hyphenChar || word == plusChar
-{-# INLINE wordIsHyphenOrPlus #-}
-
-wordIsFullStop :: Word8 -> Bool
-wordIsFullStop !word = word == fullStopChar
-{-# INLINE wordIsFullStop #-}
-
-wordIsE :: Word8 -> Bool
-wordIsE !word = word == lowerEChar || word == upperEChar
-{-# INLINE wordIsE #-}
-
-collectSign :: Bool -> B.ByteString -> Maybe (Bool, B.ByteString)
-collectSign !plusAllowed !bytestring =
-  let (!signChars, !remainder) = B.span (if plusAllowed then wordIsHyphenOrPlus else wordIsHyphen) bytestring
-      !signCharsLength         = B.length signChars
-  in  {-# SCC collectNumber #-} case () of _
-                                            | signCharsLength == 1 && not plusAllowed -> Just (False, remainder)
-                                            | signCharsLength == 1 && plusAllowed     -> Just (not (B.any wordIsHyphen signChars), remainder)
-                                            | signCharsLength == 0                    -> Just (True, remainder)
-                                            | otherwise                               -> Nothing
-
-collectNumber :: B.ByteString -> Maybe (Integer, B.ByteString)
-collectNumber !bytestring =
-  let (!numberWords, !remainder)  = B.span wordIsNumber bytestring
-      !numberResult               = B.foldl' (\number -> \word -> (number * 10) + (wordNumberToInteger word)) 0 numberWords
-  in  {-# SCC collectNumber #-} case (B.length numberWords) of
-                                                              0 -> Nothing
-                                                              _ -> Just (numberResult, remainder)
-
-collectFractionalPrefix :: B.ByteString -> Maybe (Bool, B.ByteString)
-collectFractionalPrefix !bytestring =
-  let (!fractionalPrefix, !remainder) = B.span wordIsFullStop bytestring
-  in  {-# SCC collectFractionalPrefix #-} case (B.length fractionalPrefix) of
-                                                                              0 -> Just (False, remainder)
-                                                                              1 -> Just (True, remainder)
-                                                                              _ -> Nothing
-
-collectExponentialPrefix :: B.ByteString -> Maybe (Bool, B.ByteString)
-collectExponentialPrefix !bytestring =
-  let (!exponentialPrefix, !remainder) = B.span wordIsE bytestring
-  in  {-# SCC collectExponentialPrefix #-} case (B.length exponentialPrefix) of 
-                                                                                0 -> Just (False, remainder)
-                                                                                1 -> Just (True, remainder)
-                                                                                _ -> Nothing
-
-collectSignedNumber :: Bool -> B.ByteString -> Maybe (Integer, Bool, B.ByteString)
-collectSignedNumber !plusAllowed !bytestring = do (positive, postSign)  <- collectSign plusAllowed bytestring
-                                                  (number, postNumber)  <- collectNumber postSign
-                                                  {-# SCC collectSignedNumber #-} return ((if positive then number else number * (-1)), positive, postNumber)
-
-expectNumber :: B.ByteString -> ParseResult (B.ByteString, Json)
-expectNumber !bytestring = 
-  let parsedNumber = {-# SCC expectNumber #-}  do (!mantissa, !positive, !postMantissa)   <-  collectSignedNumber False bytestring
-                                                  (!isFractional, !postPoint)             <-  collectFractionalPrefix postMantissa
-                                                  (!fractional, !postFractional)          <-  if isFractional then collectNumber postPoint else return (0, postPoint)
-                                                  let !fractionalDigits                   =   B.length postPoint - B.length postFractional
-                                                  (!isExponential, !postE)                <-  collectExponentialPrefix postFractional
-                                                  (!exponential, _, !postExponential)     <-  if isExponential then collectSignedNumber True postE else return (0, True, postE)
-                                                  let !mantissaAsScientific               =   fromIntegral mantissa
-                                                  let !fractionalAsScientific             =   {-# SCC expectNumber_asScientific #-} (fromIntegral (if positive then fractional else (-fractional))) * (10 ^^ (-fractionalDigits))
-                                                  let !mantissaPlusFractional             =   {-# SCC expectNumber_plusFractional #-} mantissaAsScientific + fractionalAsScientific
-                                                  let !numberResult                       =   {-# SCC expectNumber_numberResult #-} mantissaPlusFractional * (10 ^^ exponential)
-                                                  !numberJson                             <-  fromScientific $ numberResult
-                                                  return                              (postExponential, numberJson)
-  in  maybe (ParseFailure (InvalidNumberText $ T.pack $ show $ excerpt bytestring)) (\(newByteString, number) -> ParseSuccess (newByteString, number)) parsedNumber
+toByteString :: BSB.Builder -> B.ByteString
+toByteString = LB.toStrict . BSB.toLazyByteString
+{-# INLINE toByteString #-}

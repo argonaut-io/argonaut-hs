@@ -16,16 +16,16 @@ instance Arbitrary Scientific where
   arbitrary = genScientific
 
 instance Arbitrary JString where
-  arbitrary = liftM (JString . T.pack) arbitrary
+  arbitrary = liftM T.pack arbitrary
 
 instance Arbitrary Json where
   arbitrary = genJsonDepthLimited 3
 
 instance Arbitrary JArray where
-  arbitrary = liftM (JArray . V.fromList) arbitrary
+  arbitrary = liftM V.fromList arbitrary
 
 instance Arbitrary JObject where
-  arbitrary = liftM (JObject . M.fromList) arbitrary
+  arbitrary = liftM M.fromList arbitrary
 
 genJsonObject :: Gen Json
 genJsonObject = liftM fromObject arbitrary
@@ -37,7 +37,7 @@ genScientific :: Gen Scientific
 genScientific = pure scientific <*> arbitrary <*> arbitrary
 
 genJsonNumber :: Gen Json
-genJsonNumber = liftM fromScientificToNumberOrNull $ genScientific
+genJsonNumber = liftM fromScientific genScientific
 
 genJsonString :: Gen Json
 genJsonString = liftM fromString arbitrary
@@ -58,8 +58,8 @@ genNonNestedJson = frequency [
 
 genJsonDepthLimited :: Int -> Gen Json
 genJsonDepthLimited n | n > 1     = frequency [
-                                            (1, (liftM (fromObject . JObject . M.fromList) (genJsonFieldListDepthLimited (n - 1))))
-                                            , (1, (liftM (fromArray . JArray . V.fromList) (genJsonListDepthLimited (n - 1))))
+                                            (1, (liftM (fromObject . M.fromList) (genJsonFieldListDepthLimited (n - 1))))
+                                            , (1, (liftM (fromArray . V.fromList) (genJsonListDepthLimited (n - 1))))
                                             , (8, genNonNestedJson)
                                           ]
                       | otherwise = genNonNestedJson

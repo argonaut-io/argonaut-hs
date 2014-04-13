@@ -30,7 +30,7 @@ instance EncodeJson Identity EitherStringEncodeResult Bool where
   encodeJson = Right . fromBool . runIdentity
 
 instance EncodeJson Identity EitherStringEncodeResult Scientific where
-  encodeJson = fmap (maybe (Left "Invalid Scientific value.") Right) (fromScientific . runIdentity)
+  encodeJson = Right .fromScientific . runIdentity
 
 instance EncodeJson Identity EitherStringEncodeResult JArray where
   encodeJson = Right . fromArray . runIdentity
@@ -44,11 +44,13 @@ instance EncodeJson Identity EitherStringEncodeResult Json where
 instance EncodeJson Identity EitherStringEncodeResult () where
   encodeJson _ = Right emptyObject
 
+{-
 instance EncodeJson Identity EitherStringEncodeResult a => EncodeJson Identity EitherStringEncodeResult [a] where
-  encodeJson = fmap (fromArray . JArray . V.fromList) . (traverse (encode . Identity)) . runIdentity
+  encodeJson = fmap (fromArray . V.fromList) . (traverse (encode . Identity)) . runIdentity
 
 instance EncodeJson Identity EitherStringEncodeResult a => EncodeJson Identity EitherStringEncodeResult (M.HashMap JString a) where
-  encodeJson = fmap (fromObject . JObject) . (traverse (encode . Identity)) . runIdentity
+  encodeJson = fmap (fromObject) . (traverse (encode . Identity)) . runIdentity
 
 instance EncodeJson Identity EitherStringEncodeResult a => EncodeJson Identity EitherStringEncodeResult (V.Vector a) where
-  encodeJson = fmap (fromArray . JArray) . (traverse (encode . Identity)) . runIdentity
+  encodeJson = fmap (fromArray) . (traverse (encode . Identity)) . runIdentity
+-}

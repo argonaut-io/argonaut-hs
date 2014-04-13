@@ -36,8 +36,6 @@ module Data.Argonaut
     , objectL
     , stringL
     , nullL
-    , fromScientificToNumberOrNull
-    , fromScientificToNumberOrString
     , jsonTrue
     , jsonFalse
     , jsonZero
@@ -47,40 +45,25 @@ module Data.Argonaut
     , singleItemArray
     , emptyObject
     , singleItemObject
-    , JObject(..)
-    , JArray(..)
-    , JString(..)
-    , runJObject
-    , runJArray
+    , JObject
+    , JArray
+    , JString
   ) where
 
 import Control.Lens
 import Control.Monad()
 import Control.Applicative()
-import Data.Maybe
-import Data.Hashable(Hashable(..))
-import qualified Data.List as L
 import Data.Scientific (Scientific)
 import Data.Typeable(Typeable)
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M
-import Text.Printf
 import qualified Data.Text as T
 
-newtype JString = JString T.Text deriving (Show, Eq, Typeable)
+type JObject = M.HashMap JString Json
 
-instance Hashable JString where
-  hashWithSalt salt (JString string) = hashWithSalt salt string
+type JArray = V.Vector Json
 
-newtype JObject = JObject (M.HashMap JString Json) deriving (Show, Eq, Typeable)
-
-runJObject :: JObject -> M.HashMap JString Json
-runJObject (JObject fields) = fields
-
-newtype JArray = JArray (V.Vector Json) deriving (Show, Eq, Typeable)
-
-runJArray :: JArray -> V.Vector Json
-runJArray (JArray values) = values
+type JString = T.Text
 
 data Json = JsonObject !JObject
           | JsonArray !JArray
@@ -89,32 +72,6 @@ data Json = JsonObject !JObject
           | JsonBool !Bool
           | JsonNull
           deriving (Eq, Typeable)
-
-instance Show Json where
-  show (JsonObject (JObject !fields)) = ('{' : (L.concat $ L.intersperse "," $ fmap (\(!key, !value) -> (jsonStringShow key) ++ (':' : (show value))) $ M.toList fields)) ++ "}"
-  show (JsonArray (JArray !entries)) = ('[' : (L.concat $ L.intersperse "," $ fmap show $ V.toList entries)) ++ "]"
-  show (JsonString !string) = jsonStringShow string
-  show (JsonNumber !number) = show number
-  show (JsonBool !bool)     = if bool then "true" else "false"
-  show JsonNull             = "null"
-
-jsonStringShow :: JString -> String
-jsonStringShow (JString !text) = '"' : (L.foldr escapeAndPrependChar "\"" $ T.unpack text)
-
-escapeAndPrependChar :: Char -> String -> String
-escapeAndPrependChar '\r' !string = '\\' : 'r' : string
-escapeAndPrependChar '\n' !string = '\\' : 'n' : string
-escapeAndPrependChar '\t' !string = '\\' : 't' : string
-escapeAndPrependChar '\b' !string = '\\' : 'b' : string
-escapeAndPrependChar '\f' !string = '\\' : 'f' : string
-escapeAndPrependChar '\\' !string = '\\' : '\\' : string
-escapeAndPrependChar '/' !string  = '\\' : '/' : string
-escapeAndPrependChar '"' !string  = '\\' : '"' : string
-escapeAndPrependChar !char !string
-    | requiresEscaping  = (printf "\\u%04x" $ fromEnum char) ++ string
-    | otherwise         = char : string
-   where
-    !requiresEscaping    = char < '\x20'
 
 foldJson :: a -> (Bool -> a) -> (Scientific -> a) -> (JString -> a) -> (JArray -> a) -> (JObject -> a) -> Json -> a
 foldJson _ _ _ _ _ jsonObject (JsonObject value)  = jsonObject value
@@ -191,21 +148,21 @@ fromJString :: JString -> Json
 fromJString string = JsonString $ string
 
 toString :: Json -> Maybe String
-toString (JsonString (JString text)) = Just $ T.unpack text
+toString (JsonString text) = Just $ T.unpack text
 toString _ = Nothing
 
 fromString :: String -> Json
-fromString string = JsonString $ JString $ T.pack string
+fromString string = JsonString $ T.pack string
 
 fromText :: T.Text -> Json
-fromText text = JsonString $ JString text
+fromText text = JsonString text
 
 toScientific :: Json -> Maybe Scientific
 toScientific (JsonNumber scientific) = Just scientific
 toScientific _ = Nothing
 
-fromScientific :: Scientific -> Maybe Json
-fromScientific scientific = Just (JsonNumber scientific)
+fromScientific :: Scientific -> Json
+fromScientific scientific = JsonNumber scientific
 
 toArray :: Json -> Maybe JArray
 toArray (JsonArray array) = Just array
@@ -231,7 +188,7 @@ fromUnit _ = JsonNull
 boolL :: Prism' Json Bool
 boolL = prism' fromBool toBool
 
-numberL :: Lens Json (Maybe Json) (Maybe Scientific) Scientific
+numberL :: Lens Json Json (Maybe Scientific) Scientific
 numberL = lens toScientific (const fromScientific)
 
 arrayL :: Prism' Json JArray
@@ -245,12 +202,6 @@ stringL = prism' fromString toString
 
 nullL :: Prism' Json ()
 nullL = prism' fromUnit toUnit
-
-fromScientificToNumberOrNull :: Scientific -> Json
-fromScientificToNumberOrNull = fromMaybe JsonNull . fromScientific
-
-fromScientificToNumberOrString :: Scientific -> Json
-fromScientificToNumberOrString scientific = fromMaybe (fromString $ show scientific) (fromScientific scientific)
 
 jsonTrue :: Json
 jsonTrue = JsonBool True
@@ -268,13 +219,13 @@ emptyString :: Json
 emptyString = fromString ""
 
 emptyArray :: Json
-emptyArray = JsonArray $ JArray $ V.empty
+emptyArray = JsonArray $ V.empty
 
 singleItemArray :: Json -> Json
-singleItemArray = JsonArray . JArray . V.singleton
+singleItemArray = JsonArray . V.singleton
 
 emptyObject :: Json
-emptyObject = JsonObject $ JObject $ M.empty
+emptyObject = JsonObject $ M.empty
 
 singleItemObject :: JString -> Json -> Json
-singleItemObject field json = JsonObject $ JObject $ (M.singleton field json)
+singleItemObject field json = JsonObject $ M.singleton field json
