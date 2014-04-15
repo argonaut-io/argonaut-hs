@@ -7,13 +7,10 @@ module Data.Argonaut.Encode
     , EitherStringEncodeResult
   ) where
 
-import Data.Traversable
-import Data.Argonaut
+import Data.Argonaut.Core
 import Data.Maybe()
 import Data.Scientific (Scientific)
 import Control.Monad.Identity
-import qualified Data.Vector as V
-import qualified Data.HashMap.Strict as M
 
 class EncodeJson m n a where
   encodeJson :: m a -> n Json
@@ -43,14 +40,3 @@ instance EncodeJson Identity EitherStringEncodeResult Json where
 
 instance EncodeJson Identity EitherStringEncodeResult () where
   encodeJson _ = Right emptyObject
-
-{-
-instance EncodeJson Identity EitherStringEncodeResult a => EncodeJson Identity EitherStringEncodeResult [a] where
-  encodeJson = fmap (fromArray . V.fromList) . (traverse (encode . Identity)) . runIdentity
-
-instance EncodeJson Identity EitherStringEncodeResult a => EncodeJson Identity EitherStringEncodeResult (M.HashMap JString a) where
-  encodeJson = fmap (fromObject) . (traverse (encode . Identity)) . runIdentity
-
-instance EncodeJson Identity EitherStringEncodeResult a => EncodeJson Identity EitherStringEncodeResult (V.Vector a) where
-  encodeJson = fmap (fromArray) . (traverse (encode . Identity)) . runIdentity
--}

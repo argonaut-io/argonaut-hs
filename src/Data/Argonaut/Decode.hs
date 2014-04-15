@@ -8,7 +8,7 @@ module Data.Argonaut.Decode
   ) where
 
 import Data.Traversable
-import Data.Argonaut
+import Data.Argonaut.Core
 import Data.Maybe()
 import Data.Scientific (Scientific)
 import Control.Monad.Identity

@@ -3,8 +3,7 @@
 module Data.Argonaut.ParserSpec where
 
 import qualified Data.Text as T
-import Data.Argonaut.Parser
-import Data.Argonaut.Printer
+import Data.Argonaut
 import Data.Argonaut.TestInstances()
 import Test.Hspec
 import Test.QuickCheck

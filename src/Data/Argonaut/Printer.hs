@@ -22,7 +22,7 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString.Builder as BSB
 import qualified Data.ByteString.Builder.Prim as BSBP
-import Data.Argonaut
+import Data.Argonaut.Core
 import Control.Monad.Identity
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M

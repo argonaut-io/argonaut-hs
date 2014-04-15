@@ -4,8 +4,6 @@ module Data.Argonaut.TestTemplates where
 
 import Control.Monad.Identity
 import Data.Argonaut
-import Data.Argonaut.Encode
-import Data.Argonaut.Decode
 import Data.Traversable
 import Test.Hspec
 import Test.QuickCheck
