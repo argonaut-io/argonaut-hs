@@ -47,14 +47,3 @@ instance DecodeJson Identity EitherStringDecodeResult () where
           invalid = Left "Not an empty value."
           validArray array = if V.null array then valid else invalid
           validObject object = if M.null object then valid else valid
-
-{-
-instance DecodeJson Identity EitherStringDecodeResult a => DecodeJson Identity EitherStringDecodeResult [a] where
-  decodeJson = foldJsonArray (Left "Not an Array.") (fmap V.toList . traverse (decode . Identity)) . runIdentity
-
-instance DecodeJson Identity EitherStringDecodeResult a => DecodeJson Identity EitherStringDecodeResult (M.HashMap JString a) where
-  decodeJson = foldJsonObject (Left "Not an Object.") (traverse (decode . Identity)) . runIdentity
-
-instance DecodeJson Identity EitherStringDecodeResult a => DecodeJson Identity EitherStringDecodeResult (V.Vector a) where
-  decodeJson = foldJsonArray (Left "Not an Array.") (traverse (decode . Identity)) . runIdentity
--}
