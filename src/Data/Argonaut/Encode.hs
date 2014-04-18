@@ -1,10 +1,16 @@
-{-# LANGUAGE DeriveDataTypeable, OverloadedStrings, BangPatterns, MultiParamTypeClasses, TypeSynonymInstances, FlexibleInstances, FlexibleContexts #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Data.Argonaut.Encode
   (
       EncodeJson(..)
-    , encode
-    , EitherStringEncodeResult
+    , encodeTo
+    , encodeIdentity
   ) where
 
 import Data.Argonaut.Core
@@ -15,28 +21,29 @@ import Control.Monad.Identity
 class EncodeJson m n a where
   encodeJson :: m a -> n Json
 
-encode :: EncodeJson m n a => m a -> n Json
-encode = encodeJson
+encodeTo :: EncodeJson m n a => m a -> n Json
+encodeTo = encodeJson
 
-type EitherStringEncodeResult = Either String
+encodeIdentity :: EncodeJson Identity Identity a => a -> Json
+encodeIdentity = runIdentity . encodeTo . Identity
 
-instance EncodeJson Identity EitherStringEncodeResult JString where
-  encodeJson = Right . fromJString . runIdentity
+instance EncodeJson Identity Identity JString where
+  encodeJson = Identity . fromJString . runIdentity
 
-instance EncodeJson Identity EitherStringEncodeResult Bool where
-  encodeJson = Right . fromBool . runIdentity
+instance EncodeJson Identity Identity Bool where
+  encodeJson = Identity . fromBool . runIdentity
 
-instance EncodeJson Identity EitherStringEncodeResult Scientific where
-  encodeJson = Right .fromScientific . runIdentity
+instance EncodeJson Identity Identity Scientific where
+  encodeJson = Identity .fromScientific . runIdentity
 
-instance EncodeJson Identity EitherStringEncodeResult JArray where
-  encodeJson = Right . fromArray . runIdentity
+instance EncodeJson Identity Identity JArray where
+  encodeJson = Identity . fromArray . runIdentity
 
-instance EncodeJson Identity EitherStringEncodeResult JObject where
-  encodeJson = Right . fromObject . runIdentity
+instance EncodeJson Identity Identity JObject where
+  encodeJson = Identity . fromObject . runIdentity
 
-instance EncodeJson Identity EitherStringEncodeResult Json where
-  encodeJson = Right . runIdentity
+instance EncodeJson Identity Identity Json where
+  encodeJson = Identity . runIdentity
 
-instance EncodeJson Identity EitherStringEncodeResult () where
-  encodeJson _ = Right emptyObject
+instance EncodeJson Identity Identity () where
+  encodeJson _ = Identity $ fromUnit ()

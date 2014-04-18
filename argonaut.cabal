@@ -44,7 +44,6 @@ library
                                     Data.Argonaut.Printer
                                     Data.Argonaut.Encode
                                     Data.Argonaut.Decode
-                                    Data.Argonaut.Lenses
     exposed:                        True
     buildable:                      True
     default-language:               Haskell2010

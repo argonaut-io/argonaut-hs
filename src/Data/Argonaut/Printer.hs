@@ -5,12 +5,13 @@
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Data.Argonaut.Printer
   (
       Printer(..)
     , printTo
+    , printIdentity
     , printToByteString
     , printToText
     , printToString
@@ -35,6 +36,9 @@ class Printer m n a | m a -> n where
 
 printTo :: Printer m n a => m Json -> n a
 printTo = printJson
+
+printIdentity :: Printer Identity Identity a => Json -> a
+printIdentity = runIdentity . printTo . Identity
 
 openBraceBuilder :: BSB.Builder
 openBraceBuilder = BSB.charUtf8 '{'
@@ -161,13 +165,13 @@ instance Printer Identity Identity T.Text where
   printJson = fmap TE.decodeUtf8 . printTo
 
 printToByteString :: Json -> B.ByteString
-printToByteString = runIdentity . printTo . Identity
+printToByteString = printIdentity
 
 printToText :: Json -> T.Text
-printToText = runIdentity . printTo . Identity
+printToText = printIdentity
 
 printToString :: Json -> String
-printToString = T.unpack . runIdentity . printTo . Identity
+printToString = T.unpack . printIdentity
 
 instance Show Json where
   show = printToString

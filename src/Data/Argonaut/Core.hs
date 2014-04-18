@@ -44,8 +44,15 @@ module Data.Argonaut.Core
     , JObject
     , JArray
     , JString
+    , boolL
+    , numberL
+    , arrayL
+    , objectL
+    , stringL
+    , nullL
   ) where
 
+import Control.Lens
 import Control.Monad()
 import Control.Applicative()
 import Data.Scientific (Scientific)
@@ -206,3 +213,21 @@ emptyObject = JsonObject $ M.empty
 
 singleItemObject :: JString -> Json -> Json
 singleItemObject field json = JsonObject $ M.singleton field json
+
+boolL :: Prism' Json Bool
+boolL = prism' fromBool toBool
+
+numberL :: Prism' Json Scientific 
+numberL = prism' fromScientific toScientific
+
+arrayL :: Prism' Json JArray
+arrayL = prism' fromArray toArray
+
+objectL :: Prism' Json JObject
+objectL = prism' fromObject toObject
+
+stringL :: Prism' Json String
+stringL = prism' fromString toString
+
+nullL :: Prism' Json ()
+nullL = prism' fromUnit toUnit

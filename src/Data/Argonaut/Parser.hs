@@ -5,17 +5,19 @@
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Data.Argonaut.Parser
   (
       Parser(..)
-    , parse
+    , parseMaybe
+    , parseFrom
     , parseText
     , parseByteString
     , ParseResult(..)
-    , jsonValidSuffix
-    , jsonEOF
+    , jsonValidSuffixParser
+    , jsonEOFParser
+    , parseL
 ) where
 
 import Data.Bits
@@ -27,7 +29,8 @@ import qualified Data.ByteString.Unsafe as BU
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString.Builder as BSB
 import Data.Argonaut.Core
-import Control.Monad.Identity
+import Data.Argonaut.Printer
+import Control.Lens
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M
 import qualified Data.Text as T
@@ -59,12 +62,8 @@ import qualified Data.Attoparsec.Char8 as AC
 class Parser m n a | m a -> n where
   parseJson :: m a -> n Json
 
-parse :: Parser m n a => m a -> n Json
-parse = parseJson
-
-newtype ParserInputByteString = ParserInputByteString {runInputByteString :: B.ByteString} deriving (Eq, Ord, Show)
-
-newtype ParserInputText = ParserInputText {runInputText :: T.Text} deriving (Eq, Ord, Show)
+parseFrom :: Parser m n a => m a -> n Json
+parseFrom = parseJson
 
 data ParseResult a = ParseFailure !String | ParseSuccess !a deriving (Eq, Show)
 
@@ -77,17 +76,22 @@ instance Monad ParseResult where
   ParseFailure l >>= _ = ParseFailure l
   ParseSuccess r >>= k = k r
 
-instance Parser Identity ParseResult ParserInputByteString where
-  parseJson (Identity json) = parseByteString $ runInputByteString json
+instance Parser Identity ParseResult B.ByteString where
+  parseJson (Identity json) = parseByteString json
 
-instance Parser Identity ParseResult ParserInputText where
-  parseJson (Identity json) = parseText $ runInputText json
+instance Parser Identity ParseResult T.Text where
+  parseJson (Identity json) = parseText json
+
+parseMaybe :: Parser Identity ParseResult a => a -> Maybe Json
+parseMaybe value = case parseJson (Identity value) of
+  ParseFailure _      -> Nothing
+  ParseSuccess result -> Just result
 
 parseText :: T.Text -> ParseResult Json
 parseText text = parseByteString $ TE.encodeUtf8 text
 
 parseByteString :: B.ByteString -> ParseResult Json
-parseByteString bytestring = case AB.parseOnly jsonValidSuffix bytestring of
+parseByteString bytestring = case AB.parseOnly jsonValidSuffixParser bytestring of
   Left failMessage      -> ParseFailure failMessage
   Right result          -> ParseSuccess result
 
@@ -145,7 +149,7 @@ valueParser = do
                   -> do
                      !n <- AC.rational
                      return (fromScientific n)
-      | otherwise -> fail "not a valid json value"
+      | otherwise -> fail "Not a valid JSON value."
 
 -- | Parse a quoted JSON string.
 quotedStringParser :: A.Parser T.Text
@@ -181,12 +185,12 @@ unescape = toByteString <$> go mempty where
                          Just i -> i
                          _ -> 255
           if slash /= BACKSLASH || escape == 255
-            then fail "invalid JSON escape sequence"
+            then fail "Invalid JSON escape sequence."
             else do
             let cont m = go (acc `mappend` BSB.byteString h `mappend` m)
                 {-# INLINE cont #-}
             if t /= 117 -- 'u'
-              then cont (BSB.word8 (BU.unsafeIndex mapping escape))
+              then cont (BSB.word8 (BU.unsafeIndex mappingEscapeChars escape))
               else do
                    a <- hexQuad
                    if a < 0xd800 || a > 0xdfff
@@ -197,12 +201,12 @@ unescape = toByteString <$> go mempty where
                          then let !c = ((a - 0xd800) `shiftL` 10) +
                                        (b - 0xdc00) + 0x10000
                               in cont (BSB.charUtf8 (chr c))
-                         else fail "invalid UTF-16 surrogates"
+                         else fail "Invalid UTF-16 surrogates."
     done <- Z.atEnd
     if done
       then return (acc `mappend` BSB.byteString h)
       else rest
-  mapping = "\"\\/\n\t\b\r\f"
+  mappingEscapeChars = "\"\\/\n\t\b\r\f"
 
 hexQuad :: Z.Parser Int
 hexQuad = do
@@ -215,14 +219,17 @@ hexQuad = do
       a = hex 0; b = hex 1; c = hex 2; d = hex 3
   if (a .|. b .|. c .|. d) /= 255
     then return $! d .|. (c `shiftL` 4) .|. (b `shiftL` 8) .|. (a `shiftL` 12)
-    else fail "invalid hex escape"
+    else fail "Invalid hex escape."
 
-jsonValidSuffix :: A.Parser Json
-jsonValidSuffix = valueParser <* AC.skipSpace
+jsonValidSuffixParser :: A.Parser Json
+jsonValidSuffixParser = valueParser <* AC.skipSpace
 
-jsonEOF :: A.Parser Json
-jsonEOF = jsonValidSuffix <* AC.endOfInput
+jsonEOFParser :: A.Parser Json
+jsonEOFParser = jsonValidSuffixParser <* AC.endOfInput
 
 toByteString :: BSB.Builder -> B.ByteString
 toByteString = LB.toStrict . BSB.toLazyByteString
 {-# INLINE toByteString #-}
+
+parseL :: (Parser Identity ParseResult a, Printer Identity Identity a) => Prism' a Json
+parseL = prism' printIdentity parseMaybe
