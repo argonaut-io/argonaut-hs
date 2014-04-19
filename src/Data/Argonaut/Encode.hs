@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -18,7 +19,7 @@ import Data.Maybe()
 import Data.Scientific (Scientific)
 import Control.Monad.Identity
 
-class EncodeJson m n a where
+class EncodeJson m n a | m a -> n where
   encodeJson :: m a -> n Json
 
 encodeTo :: EncodeJson m n a => m a -> n Json

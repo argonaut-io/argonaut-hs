@@ -1,4 +1,5 @@
-{-# LANGUAGE OverloadedStrings, TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Data.Argonaut.TestTemplates where
 
@@ -15,8 +16,8 @@ buildEncodeDecodeTest names = join $ fmap (\doStatements -> [|describe "encode/d
     it ($(stringE $ show typeName) ++ " decoding should mirror encoding") $ do
       property $ \valueOfType ->
         let
-          liftAndEncode = (encode :: Identity $(conT typeName) -> EitherStringEncodeResult Json) . return
-          liftAndDecode = (decode :: Identity Json -> EitherStringDecodeResult $(conT typeName)) . return
-          encodeThenDecode valueBeforeEncoding = liftAndEncode valueBeforeEncoding >>= liftAndDecode
+          liftAndEncode = (encodeTo :: Identity $(conT typeName) -> Identity Json) . return
+          liftAndDecode = (decodeFrom :: Identity Json -> EitherStringDecodeResult $(conT typeName))
+          encodeThenDecode = liftAndDecode . liftAndEncode
         in ((encodeThenDecode valueOfType) `shouldBe` (return valueOfType))
     |]) names

@@ -1,4 +1,11 @@
-{-# LANGUAGE DeriveDataTypeable, OverloadedStrings, BangPatterns, MultiParamTypeClasses, TypeSynonymInstances, FlexibleInstances, FlexibleContexts #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Data.Argonaut.Decode
   (
@@ -20,7 +27,7 @@ import qualified Data.HashMap.Strict as M
 
 type EitherStringDecodeResult = Either String
 
-class DecodeJson m n a where
+class DecodeJson m n a | m a -> n where
   decodeJson :: m Json -> n a
 
 decodeFrom :: DecodeJson m n a => m Json -> n a
