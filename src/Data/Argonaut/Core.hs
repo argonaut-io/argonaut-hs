@@ -1,4 +1,7 @@
-{-# LANGUAGE DeriveDataTypeable, OverloadedStrings, BangPatterns #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Data.Argonaut.Core
   (

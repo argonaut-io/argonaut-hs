@@ -6,12 +6,15 @@
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Data.Argonaut.Parser
   (
       Parser(..)
     , parseMaybe
     , parseFrom
+    , parseString
     , parseText
     , parseByteString
     , ParseResult(..)
@@ -76,6 +79,9 @@ instance Monad ParseResult where
   ParseFailure l >>= _ = ParseFailure l
   ParseSuccess r >>= k = k r
 
+instance Parser Identity ParseResult String where
+  parseJson (Identity json) = parseString json
+
 instance Parser Identity ParseResult B.ByteString where
   parseJson (Identity json) = parseByteString json
 
@@ -87,8 +93,11 @@ parseMaybe value = case parseJson (Identity value) of
   ParseFailure _      -> Nothing
   ParseSuccess result -> Just result
 
+parseString :: String -> ParseResult Json
+parseString = parseText . T.pack
+
 parseText :: T.Text -> ParseResult Json
-parseText text = parseByteString $ TE.encodeUtf8 text
+parseText = parseByteString . TE.encodeUtf8
 
 parseByteString :: B.ByteString -> ParseResult Json
 parseByteString bytestring = case AB.parseOnly jsonValidSuffixParser bytestring of

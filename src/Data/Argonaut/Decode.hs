@@ -6,6 +6,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Data.Argonaut.Decode
   (
@@ -13,15 +14,19 @@ module Data.Argonaut.Decode
     , decodeFrom
     , decodeMaybe
     , EitherStringDecodeResult
+    , decodeL
+    , objectFieldL
+    , arrayIndexL
+    , objectMembersL
+    , arrayMembersL
   ) where
 
 import Data.Argonaut.Core
 import Data.Argonaut.Encode
-import Data.Either
 import Data.Maybe()
 import Data.Scientific (Scientific)
 import Control.Lens
-import Control.Monad.Identity
+import Control.Monad.Identity()
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M
 
@@ -63,3 +68,15 @@ instance DecodeJson Identity EitherStringDecodeResult () where
 
 decodeL :: (DecodeJson Identity EitherStringDecodeResult a, EncodeJson Identity Identity a) => Prism' Json a
 decodeL = prism' encodeIdentity decodeMaybe
+
+objectFieldL :: (DecodeJson Identity EitherStringDecodeResult a, EncodeJson Identity Identity a) => JString -> Traversal' Json a
+objectFieldL name = objectL . ix name . decodeL
+
+arrayIndexL :: (DecodeJson Identity EitherStringDecodeResult a, EncodeJson Identity Identity a) => Int -> Traversal' Json a
+arrayIndexL arrayIndex = arrayL . ix arrayIndex . decodeL
+
+objectMembersL :: (DecodeJson Identity EitherStringDecodeResult a, EncodeJson Identity Identity a) => IndexedTraversal' JString Json a
+objectMembersL = objectL . itraversed . decodeL
+
+arrayMembersL :: (DecodeJson Identity EitherStringDecodeResult a, EncodeJson Identity Identity a) => IndexedTraversal' Int Json a
+arrayMembersL = arrayL . traversed . decodeL

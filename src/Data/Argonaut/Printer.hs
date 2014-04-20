@@ -6,6 +6,8 @@
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Data.Argonaut.Printer
   (
@@ -163,6 +165,9 @@ instance Printer Identity Identity B.ByteString where
 
 instance Printer Identity Identity T.Text where 
   printJson = fmap TE.decodeUtf8 . printTo
+
+instance Printer Identity Identity String where 
+  printJson = fmap T.unpack . printTo
 
 printToByteString :: Json -> B.ByteString
 printToByteString = printIdentity
