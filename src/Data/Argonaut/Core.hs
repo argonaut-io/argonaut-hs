@@ -261,12 +261,12 @@ stringL = prism' fromString toString
 jsonStringL :: Prism' Json Json
 jsonStringL = prism' id possibleJson
   where possibleJson string@(JsonString _ ) = Just string
-        possibleJSon _                      = Nothing
+        possibleJson _                      = Nothing
 
 nullL :: Prism' Json ()
 nullL = prism' fromUnit toUnit
 
 jsonNullL :: Prism' Json Json
 jsonNullL = prism' id possibleJson
-  where possibleJson jsonNull@JsonNull = Just jsonNull
+  where possibleJson nullJson@JsonNull = Just nullJson
         possibleJson _                 = Nothing
