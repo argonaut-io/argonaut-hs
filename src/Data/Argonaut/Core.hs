@@ -48,11 +48,17 @@ module Data.Argonaut.Core
     , JArray
     , JString
     , boolL
+    , jsonBoolL
     , numberL
+    , jsonNumberL
     , arrayL
+    , jsonArrayL
     , objectL
+    , jsonObjectL
     , stringL
+    , jsonStringL
     , nullL
+    , jsonNullL
   ) where
 
 import Control.Lens
@@ -220,17 +226,47 @@ singleItemObject field json = JsonObject $ M.singleton field json
 boolL :: Prism' Json Bool
 boolL = prism' fromBool toBool
 
+jsonBoolL :: Prism' Json Json
+jsonBoolL = prism' id possibleJson
+  where possibleJson bool@(JsonBool _) = Just bool
+        possibleJson _                 = Nothing
+
 numberL :: Prism' Json Scientific 
 numberL = prism' fromScientific toScientific
+
+jsonNumberL :: Prism' Json Json
+jsonNumberL = prism' id possibleJson
+  where possibleJson number@(JsonNumber _) = Just number
+        possibleJson _                     = Nothing
 
 arrayL :: Prism' Json JArray
 arrayL = prism' fromArray toArray
 
+jsonArrayL :: Prism' Json Json
+jsonArrayL = prism' id possibleJson
+  where possibleJson array@(JsonArray _) = Just array
+        possibleJson _                   = Nothing
+
 objectL :: Prism' Json JObject
 objectL = prism' fromObject toObject
+
+jsonObjectL :: Prism' Json Json
+jsonObjectL = prism' id possibleJson
+  where possibleJson object@(JsonObject _) = Just object
+        possibleJson _                     = Nothing
 
 stringL :: Prism' Json String
 stringL = prism' fromString toString
 
+jsonStringL :: Prism' Json Json
+jsonStringL = prism' id possibleJson
+  where possibleJson string@(JsonString _ ) = Just string
+        possibleJSon _                      = Nothing
+
 nullL :: Prism' Json ()
 nullL = prism' fromUnit toUnit
+
+jsonNullL :: Prism' Json Json
+jsonNullL = prism' id possibleJson
+  where possibleJson jsonNull@JsonNull = Just jsonNull
+        possibleJson _                 = Nothing
