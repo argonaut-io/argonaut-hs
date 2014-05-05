@@ -60,7 +60,7 @@ instance DecodeJson Identity EitherStringDecodeResult Json where
   decodeJson = Right . runIdentity
 
 instance DecodeJson Identity EitherStringDecodeResult () where
-  decodeJson = foldJson valid (\_ -> invalid) (\_ -> invalid) (\_ -> invalid) validArray validObject . runIdentity
+  decodeJson = foldJson (\_ -> valid) (\_ -> invalid) (\_ -> invalid) (\_ -> invalid) validArray validObject . runIdentity
     where valid = Right ()
           invalid = Left "Not an empty value."
           validArray array = if V.null array then valid else invalid

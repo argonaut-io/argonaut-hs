@@ -85,16 +85,16 @@ data Json = JsonObject !JObject
           | JsonNull
           deriving (Eq, Typeable)
 
-foldJson :: a -> (Bool -> a) -> (Scientific -> a) -> (JString -> a) -> (JArray -> a) -> (JObject -> a) -> Json -> a
+foldJson :: (() -> a) -> (Bool -> a) -> (Scientific -> a) -> (JString -> a) -> (JArray -> a) -> (JObject -> a) -> Json -> a
 foldJson _ _ _ _ _ jsonObject (JsonObject value)  = jsonObject value
 foldJson _ _ _ _ jsonArray _ (JsonArray value)    = jsonArray value
 foldJson _ _ _ jsonString _ _ (JsonString value)  = jsonString value
 foldJson _ _ jsonNumber _ _ _ (JsonNumber value)  = jsonNumber value
 foldJson _ jsonBool _ _ _ _ (JsonBool value)      = jsonBool value
-foldJson jsonNullValue _ _ _ _ _ (JsonNull)       = jsonNullValue
+foldJson jsonNullTransform _ _ _ _ _ (JsonNull)   = jsonNullTransform ()
 
-foldJsonNull :: a -> a -> Json -> a
-foldJsonNull _ nullValue JsonNull = nullValue
+foldJsonNull :: a -> (() -> a) -> Json -> a
+foldJsonNull _ nullTransform JsonNull = nullTransform ()
 foldJsonNull defaultValue _ _ = defaultValue
 
 foldJsonBool :: a -> (Bool -> a) -> Json -> a
@@ -118,7 +118,7 @@ foldJsonObject _ valueTransform (JsonObject value) = valueTransform value
 foldJsonObject defaultValue _ _ = defaultValue
 
 isNull :: Json -> Bool
-isNull = foldJsonNull False True
+isNull = foldJsonNull False (\_ -> True)
 
 isBool :: Json -> Bool
 isBool = foldJsonBool False (\_ -> True)

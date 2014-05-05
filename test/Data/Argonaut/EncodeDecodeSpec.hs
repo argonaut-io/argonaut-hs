@@ -12,8 +12,9 @@ import Test.Hspec
 spec :: Spec
 spec = parallel $ do
   $(buildEncodeDecodeTest [
-    ''JString
+      ''JString
+    , ''JObject
     , ''Bool
     , ''Scientific
     , ''JArray
-    , ''JObject])
+    , ''()])

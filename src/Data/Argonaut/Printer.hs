@@ -170,7 +170,7 @@ numberToBuilder s
     e = base10Exponent s
 
 encodeToByteStringBuilder :: Json -> BSB.Builder
-encodeToByteStringBuilder = {-# SCC encodeToByteStringBuilder #-} foldJson nullBuilder (\bool -> if bool then trueBuilder else falseBuilder) numberToBuilder stringToBuilder arrayToBuilder objectToBuilder
+encodeToByteStringBuilder = {-# SCC encodeToByteStringBuilder #-} foldJson (\_ -> nullBuilder) (\bool -> if bool then trueBuilder else falseBuilder) numberToBuilder stringToBuilder arrayToBuilder objectToBuilder
 
 instance Printer Identity Identity BSB.Builder where 
   printJson = Identity . encodeToByteStringBuilder . runIdentity
