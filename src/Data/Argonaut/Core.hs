@@ -14,6 +14,7 @@ module Data.Argonaut.Core
     , foldJsonArray
     , foldJsonObject
     , isNull
+    , isBool
     , isTrue
     , isFalse
     , isNumber
@@ -117,50 +118,43 @@ foldJsonObject _ valueTransform (JsonObject value) = valueTransform value
 foldJsonObject defaultValue _ _ = defaultValue
 
 isNull :: Json -> Bool
-isNull JsonNull = True
-isNull _ = False
+isNull = foldJsonNull False True
+
+isBool :: Json -> Bool
+isBool = foldJsonBool False (\_ -> True)
 
 isTrue :: Json -> Bool
-isTrue (JsonBool True) = True
-isTrue _ = False
+isTrue = foldJsonBool False id
 
 isFalse :: Json -> Bool
-isFalse (JsonBool False) = True
-isFalse _ = False
+isFalse = foldJsonBool False not
 
 isNumber :: Json -> Bool
-isNumber (JsonNumber _) = True
-isNumber _ = False
+isNumber = foldJsonNumber False (\_ -> True)
 
 isString :: Json -> Bool
-isString (JsonString _) = True
-isString _ = False
+isString = foldJsonString False (\_ -> True)
 
 isArray :: Json -> Bool
-isArray (JsonArray _) = True
-isArray _ = False
+isArray = foldJsonArray False (\_ -> True)
 
 isObject :: Json -> Bool
-isObject (JsonObject _) = True
-isObject _ = False
+isObject = foldJsonObject False (\_ -> True)
 
 toBool :: Json -> Maybe Bool
-toBool (JsonBool bool) = Just bool
-toBool _ = Nothing
+toBool = foldJsonBool Nothing Just
 
 fromBool :: Bool -> Json
 fromBool = JsonBool
 
 toJString :: Json -> Maybe JString
-toJString (JsonString text) = Just text
-toJString _ = Nothing
+toJString = foldJsonString Nothing Just
 
 fromJString :: JString -> Json
 fromJString string = JsonString $ string
 
 toString :: Json -> Maybe String
-toString (JsonString text) = Just $ T.unpack text
-toString _ = Nothing
+toString = fmap T.unpack . toJString
 
 fromString :: String -> Json
 fromString string = JsonString $ T.pack string
@@ -169,22 +163,19 @@ fromText :: T.Text -> Json
 fromText text = JsonString text
 
 toScientific :: Json -> Maybe Scientific
-toScientific (JsonNumber scientific) = Just scientific
-toScientific _ = Nothing
+toScientific = foldJsonNumber Nothing Just
 
 fromScientific :: Scientific -> Json
 fromScientific scientific = JsonNumber scientific
 
 toArray :: Json -> Maybe JArray
-toArray (JsonArray array) = Just array
-toArray _ = Nothing
+toArray = foldJsonArray Nothing Just
 
 fromArray :: JArray -> Json
 fromArray = JsonArray
 
 toObject :: Json -> Maybe JObject
-toObject (JsonObject object) = Just object
-toObject _ = Nothing
+toObject = foldJsonObject Nothing Just
 
 fromObject :: JObject -> Json
 fromObject = JsonObject
@@ -226,47 +217,35 @@ singleItemObject field json = JsonObject $ M.singleton field json
 boolL :: Prism' Json Bool
 boolL = prism' fromBool toBool
 
-jsonBoolL :: Prism' Json Json
-jsonBoolL = prism' id possibleJson
-  where possibleJson bool@(JsonBool _) = Just bool
-        possibleJson _                 = Nothing
+jsonBoolL :: Traversal' Json Json
+jsonBoolL = id . filtered isBool
 
 numberL :: Prism' Json Scientific 
 numberL = prism' fromScientific toScientific
 
-jsonNumberL :: Prism' Json Json
-jsonNumberL = prism' id possibleJson
-  where possibleJson number@(JsonNumber _) = Just number
-        possibleJson _                     = Nothing
+jsonNumberL :: Traversal' Json Json
+jsonNumberL = id . filtered isNumber
 
 arrayL :: Prism' Json JArray
 arrayL = prism' fromArray toArray
 
-jsonArrayL :: Prism' Json Json
-jsonArrayL = prism' id possibleJson
-  where possibleJson array@(JsonArray _) = Just array
-        possibleJson _                   = Nothing
+jsonArrayL :: Traversal' Json Json
+jsonArrayL = id . filtered isArray
 
 objectL :: Prism' Json JObject
 objectL = prism' fromObject toObject
 
-jsonObjectL :: Prism' Json Json
-jsonObjectL = prism' id possibleJson
-  where possibleJson object@(JsonObject _) = Just object
-        possibleJson _                     = Nothing
+jsonObjectL :: Traversal' Json Json
+jsonObjectL = id . filtered isObject
 
 stringL :: Prism' Json String
 stringL = prism' fromString toString
 
-jsonStringL :: Prism' Json Json
-jsonStringL = prism' id possibleJson
-  where possibleJson string@(JsonString _ ) = Just string
-        possibleJson _                      = Nothing
+jsonStringL :: Traversal' Json Json
+jsonStringL = id . filtered isString
 
 nullL :: Prism' Json ()
 nullL = prism' fromUnit toUnit
 
-jsonNullL :: Prism' Json Json
-jsonNullL = prism' id possibleJson
-  where possibleJson nullJson@JsonNull = Just nullJson
-        possibleJson _                 = Nothing
+jsonNullL :: Traversal' Json Json
+jsonNullL = id . filtered isNull

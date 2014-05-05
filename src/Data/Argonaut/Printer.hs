@@ -33,6 +33,21 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import Data.Scientific (Scientific, coefficient, base10Exponent, formatScientific, FPFormat(Generic))
 
+data PrinterConfig = PrinterConfig {
+    lbraceLeft        :: Int -> String
+  , lbraceRight       :: Int -> String
+  , rbraceLeft        :: Int -> String
+  , rbraceRight       :: Int -> String
+  , lbracketLeft      :: Int -> String
+  , lbracketRight     :: Int -> String
+  , rbracketLeft      :: Int -> String
+  , rbracketRight     :: Int -> String
+  , commaLeft         :: Int -> String
+  , commaRight        :: Int -> String
+  , colonLeft         :: Int -> String
+  , colonRight        :: Int -> String
+}
+
 class Printer m n a | m a -> n where
   printJson :: m Json -> n a
 
