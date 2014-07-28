@@ -137,6 +137,29 @@
 
 ## Module Data.Argonaut.Encode
 
+### Type Classes
+
+    class EncodeJson m n a where
+      encodeJson :: m a -> n Json
+
+
+### Type Class Instances
+
+    instance encodeJsonIdIdJArray :: EncodeJson Identity Identity [Json]
+
+    instance encodeJsonIdIdJBoolean :: EncodeJson Identity Identity Boolean
+
+    instance encodeJsonIdIdJNull :: EncodeJson Identity Identity Unit
+
+    instance encodeJsonIdIdJNumber :: EncodeJson Identity Identity Number
+
+    instance encodeJsonIdIdJObject :: EncodeJson Identity Identity (M.Map String Json)
+
+    instance encodeJsonIdIdJString :: EncodeJson Identity Identity String
+
+    instance encodeJsonIdIdJson :: EncodeJson Identity Identity Json
+
+
 ## Module Data.Argonaut.Parser
 
 ## Module Data.Argonaut.Printer
