@@ -1,6 +1,6 @@
 module Data.Argonaut.Core where
 
-  import Control.Lens (prism', PrismP())
+  import Control.Lens (filtered, prism', PrismP(), TraversalP())
 
   import Data.Maybe (Maybe(..))
 
@@ -161,15 +161,30 @@ module Data.Argonaut.Core where
 
   -- Prisms
 
-  -- nullL :: PrismP Json JNull
+  nullL :: PrismP Json JNull
   nullL = prism' fromNull toNull
-  -- booleanL :: PrismP Json JBoolean
+  booleanL :: PrismP Json JBoolean
   booleanL = prism' fromBoolean toBoolean
-  -- numberL :: PrismP Json JNumber
+  numberL :: PrismP Json JNumber
   numberL = prism' fromNumber toNumber
-  -- stringL :: PrismP Json JString
+  stringL :: PrismP Json JString
   stringL = prism' fromString toString
-  -- arrayL :: PrismP Json JArray
+  arrayL :: PrismP Json JArray
   arrayL = prism' fromArray toArray
-  -- objectL :: PrismP Json JObject
+  objectL :: PrismP Json JObject
   objectL = prism' fromObject toObject
+
+  -- Traversals
+
+  jsonNullL :: TraversalP Json Json
+  jsonNullL = id <<< filtered isNull
+  jsonBooleanL :: TraversalP Json Json
+  jsonBooleanL = id <<< filtered isBoolean
+  jsonNumberL :: TraversalP Json Json
+  jsonNumberL = id <<< filtered isNumber
+  jsonStringL :: TraversalP Json Json
+  jsonStringL = id <<< filtered isString
+  jsonArrayL :: TraversalP Json Json
+  jsonArrayL = id <<< filtered isArray
+  jsonObjectL :: TraversalP Json Json
+  jsonObjectL = id <<< filtered isObject

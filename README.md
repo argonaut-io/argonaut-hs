@@ -34,6 +34,10 @@
 
 ### Values
 
+    arrayL :: PrismP Json JArray
+
+    booleanL :: PrismP Json JBoolean
+
     foldJson :: forall a. (Unit -> a) -> (JBoolean -> a) -> (JNumber -> a) -> (JString -> a) -> (JArray -> a) -> (JObject -> a) -> Json -> a
 
     foldJsonArray :: forall a. a -> (JArray -> a) -> Json -> a
@@ -74,6 +78,10 @@
 
     isString :: Json -> Boolean
 
+    jsonArrayL :: TraversalP Json Json
+
+    jsonBooleanL :: TraversalP Json Json
+
     jsonEmptyArray :: Json
 
     jsonEmptyObject :: Json
@@ -84,13 +92,29 @@
 
     jsonNull :: Json
 
+    jsonNullL :: TraversalP Json Json
+
+    jsonNumberL :: TraversalP Json Json
+
+    jsonObjectL :: TraversalP Json Json
+
     jsonSingletonArray :: Json -> Json
 
     jsonSingletonObject :: JString -> Json -> Json
 
+    jsonStringL :: TraversalP Json Json
+
     jsonTrue :: Json
 
     jsonZero :: Json
+
+    nullL :: PrismP Json JNull
+
+    numberL :: PrismP Json JNumber
+
+    objectL :: PrismP Json JObject
+
+    stringL :: PrismP Json JString
 
     toArray :: Json -> Maybe JArray
 
