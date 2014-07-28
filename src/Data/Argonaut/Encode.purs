@@ -36,3 +36,9 @@ module Data.Argonaut.Encode where
 
   instance encodeJsonIdIdJson :: EncodeJson Identity Identity Json where
     encodeJson = runIdentity >>> Identity
+
+  encodeTo :: forall m a n. (EncodeJson m n a) => m a -> n Json
+  encodeTo = encodeJson
+
+  encodeIdentity :: forall a. (EncodeJson Identity Identity a) => a -> Json
+  encodeIdentity = Identity >>> encodeTo >>> runIdentity

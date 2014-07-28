@@ -135,6 +135,42 @@
 
 ## Module Data.Argonaut.Decode
 
+### Type Classes
+
+    class DecodeJson m n a where
+      decodeJson :: m Json -> n a
+
+
+### Type Class Instances
+
+    instance decodeJsonIdESDRArray :: DecodeJson Identity (Either String) [Json]
+
+    instance decodeJsonIdESDRBoolean :: DecodeJson Identity (Either String) Boolean
+
+    instance decodeJsonIdESDRJson :: DecodeJson Identity (Either String) Json
+
+    instance decodeJsonIdESDRNull :: DecodeJson Identity (Either String) Unit
+
+    instance decodeJsonIdESDRNumber :: DecodeJson Identity (Either String) Number
+
+    instance decodeJsonIdESDRObject :: DecodeJson Identity (Either String) (M.Map String Json)
+
+    instance decodeJsonIdESDRString :: DecodeJson Identity (Either String) String
+
+
+### Values
+
+    arrayIndexL :: forall a. (DecodeJson Identity (Either String) a, EncodeJson Identity Identity a) => JNumber -> TraversalP Json a
+
+    decodeFrom :: forall m a n. (DecodeJson m n a) => m Json -> n a
+
+    decodeL :: forall a. (DecodeJson Identity (Either String) a, EncodeJson Identity Identity a) => PrismP Json a
+
+    decodeMaybe :: forall a. (DecodeJson Identity (Either String) a) => Json -> Maybe a
+
+    objectFieldL :: forall a. (DecodeJson Identity (Either String) a, EncodeJson Identity Identity a) => JString -> TraversalP Json a
+
+
 ## Module Data.Argonaut.Encode
 
 ### Type Classes
@@ -158,6 +194,13 @@
     instance encodeJsonIdIdJString :: EncodeJson Identity Identity String
 
     instance encodeJsonIdIdJson :: EncodeJson Identity Identity Json
+
+
+### Values
+
+    encodeIdentity :: forall a. (EncodeJson Identity Identity a) => a -> Json
+
+    encodeTo :: forall m a n. (EncodeJson m n a) => m a -> n Json
 
 
 ## Module Data.Argonaut.Parser
