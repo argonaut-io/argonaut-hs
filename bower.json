@@ -12,6 +12,7 @@
     "purescript-maps": "~0.0.4"
   },
   "dependencies": {
-    "purescript-lens": "../purescript-lens#master"
+    "purescript-lens": "../purescript-lens#master",
+    "purescript-globals": "~0.1.4"
   }
 }

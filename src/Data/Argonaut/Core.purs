@@ -3,18 +3,22 @@ module Data.Argonaut.Core where
   import Control.Lens (filtered, prism', PrismP(), TraversalP())
 
   import Data.Maybe (Maybe(..))
+  import Data.Tuple (Tuple(..))
 
   import qualified Data.Map as M
 
-  type JObject = M.Map JString Json
-  type JArray = [Json]
-  type JString = String
-  type JNumber = Number
+  type JNull    = Unit
   type JBoolean = Boolean
-  type JNull = Unit
+  type JNumber  = Number
+  type JString  = String
+  type JField   = String
+  type JAssoc   = Tuple JField Json
+  type JArray   = [Json]
+  type JObject  = M.Map JField Json
 
   data Json = JsonNull    JNull
             | JsonBoolean JBoolean
+            -- FIXME: This should be a scientific notation number
             | JsonNumber  JNumber
             | JsonString  JString
             | JsonArray   JArray
@@ -34,7 +38,7 @@ module Data.Argonaut.Core where
   -- Folds
 
   foldJson :: forall a
-           .  (Unit     -> a)
+           .  (JNull    -> a)
            -> (JBoolean -> a)
            -> (JNumber  -> a)
            -> (JString  -> a)
@@ -156,7 +160,7 @@ module Data.Argonaut.Core where
   jsonEmptyObject = fromObject M.empty
   jsonSingletonArray :: Json -> Json
   jsonSingletonArray j = fromArray [j]
-  jsonSingletonObject :: JString -> Json -> Json
+  jsonSingletonObject :: JField -> Json -> Json
   jsonSingletonObject key val = fromObject $ M.singleton key val
 
   -- Prisms

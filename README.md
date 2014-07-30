@@ -2,19 +2,32 @@
 
 ## Module Data.Argonaut
 
+## Module Data.Argonaut.Combinators
+
+### Values
+
+    (:=) :: forall a. (EncodeJson Identity Identity a) => String -> a -> JAssoc
+
+    (~>) :: JAssoc -> Json -> Json
+
+
 ## Module Data.Argonaut.Core
 
 ### Types
 
     type JArray  = [Json]
 
+    type JAssoc  = Tuple JField Json
+
     type JBoolean  = Boolean
+
+    type JField  = String
 
     type JNull  = Unit
 
     type JNumber  = Number
 
-    type JObject  = M.Map JString Json
+    type JObject  = M.Map JField Json
 
     type JString  = String
 
@@ -38,7 +51,7 @@
 
     booleanL :: PrismP Json JBoolean
 
-    foldJson :: forall a. (Unit -> a) -> (JBoolean -> a) -> (JNumber -> a) -> (JString -> a) -> (JArray -> a) -> (JObject -> a) -> Json -> a
+    foldJson :: forall a. (JNull -> a) -> (JBoolean -> a) -> (JNumber -> a) -> (JString -> a) -> (JArray -> a) -> (JObject -> a) -> Json -> a
 
     foldJsonArray :: forall a. a -> (JArray -> a) -> Json -> a
 
@@ -100,7 +113,7 @@
 
     jsonSingletonArray :: Json -> Json
 
-    jsonSingletonObject :: JString -> Json -> Json
+    jsonSingletonObject :: JField -> Json -> Json
 
     jsonStringL :: TraversalP Json Json
 
@@ -205,6 +218,165 @@
 
 ## Module Data.Argonaut.Parser
 
+### Types
+
+    data ParseResult a where
+      ParseFailure :: String -> ParseResult a
+      ParseSuccess :: a -> ParseResult a
+
+    type ParserState s a = { consumed :: Boolean, result :: Either ParseError a, input :: s }
+
+
+### Type Classes
+
+    class Parser m n a where
+      parseJson :: m a -> n Json
+
+
+### Type Class Instances
+
+    instance applicativeParseResult :: Applicative ParseResult
+
+    instance applyParseResult :: Apply ParseResult
+
+    instance bindParseResult :: Bind ParseResult
+
+    instance eqParseResult :: (Eq a) => Eq (ParseResult a)
+
+    instance functorParseResult :: Functor ParseResult
+
+    instance monadParseResult :: Monad ParseResult
+
+    instance parserIdParseResultString :: Parser Identity ParseResult String
+
+    instance showParseError :: Show ParseError
+
+    instance showParseResult :: (Show a) => Show (ParseResult a)
+
+
+### Values
+
+    arrayParser :: Unit -> Parser String Json
+
+    between :: forall s a m open close. (Monad m) => ParserT s m open -> ParserT s m close -> ParserT s m a -> ParserT s m a
+
+    booleanParser :: Parser String Json
+
+    braces :: forall s m a. (Monad m) => ParserT String m a -> ParserT String m a
+
+    brackets :: forall m a. (Monad m) => ParserT String m a -> ParserT String m a
+
+    digit :: Parser String String
+
+    digits :: Parser String String
+
+    emptyArrayParser :: Parser String Json
+
+    emptyObjectParser :: Parser String Json
+
+    expParser :: Parser String String
+
+    fracParser :: Parser String String
+
+    fromEither :: forall a. Either String a -> ParseResult a
+
+    invalidJson :: forall a. String -> Parser String a
+
+    isDigit :: String -> Boolean
+
+    isoParseEither :: forall a. IsoP (ParseResult a) (Either String a)
+
+    jsonParser :: Parser String Json
+
+    lookAhead :: forall s a m. (Monad m) => ParserT s m a -> ParserT s m a
+
+    manyTill :: forall s a m e. (Monad m) => ParserT s m a -> ParserT s m e -> ParserT s m [a]
+
+    memberParser :: Unit -> Parser String JAssoc
+
+    membersParser :: Unit -> Parser String Json
+
+    nonEmptyArrayParser :: Parser String Json
+
+    nonEmptyObjectParser :: Unit -> Parser String Json
+
+    noneOf :: forall s m a. (Monad m) => [String] -> ParserT String m String
+
+    nullParser :: Parser String Json
+
+    numberParser :: Parser String Json
+
+    objectParser :: Unit -> Parser String Json
+
+    oneToNine :: String -> Boolean
+
+    option :: forall s a m. (Monad m) => a -> ParserT s m a -> ParserT s m a
+
+    ord :: String -> Number
+
+    parseFrom :: forall m a n. (Parser m n a) => m a -> n Json
+
+    parseMaybe :: forall a. (Parser Identity ParseResult a) => a -> Maybe Json
+
+    parseString :: String -> ParseResult Json
+
+    quoted :: forall m a. (Monad m) => ParserT String m a -> ParserT String m a
+
+    rawStringParser :: Parser String String
+
+    skipMany :: forall s a m. (Monad m) => ParserT s m a -> ParserT s m {  }
+
+    skipMany1 :: forall s a m. (Monad m) => ParserT s m a -> ParserT s m {  }
+
+    skipSpaces :: Parser String {  }
+
+    stringParser :: Parser String Json
+
+    toEither :: forall a. ParseResult a -> Either String a
+
+    undefined :: forall a. a
+
+    valueParser :: Unit -> Parser String Json
+
+
 ## Module Data.Argonaut.Printer
+
+### Type Classes
+
+    class Printer m n a where
+      printJson :: m Json -> n a
+
+
+### Type Class Instances
+
+    instance printerIdIdJNull :: Printer Identity Identity String
+
+    instance showJson :: Show Json
+
+
+### Values
+
+    printIdentity :: forall a. (Printer Identity Identity a) => Json -> a
+
+    printTo :: forall m a n. (Printer m n a) => m Json -> n a
+
+    printToString :: Json -> String
+
+    stringify :: Json -> String
+
+    stringifyArray :: JArray -> String
+
+    stringifyBoolean :: JBoolean -> String
+
+    stringifyField :: JField -> String
+
+    stringifyNull :: JNull -> String
+
+    stringifyNumber :: JNumber -> String
+
+    stringifyObject :: JObject -> String
+
+    stringifyString :: JString -> String
+
 
 
