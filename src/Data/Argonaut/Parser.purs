@@ -29,8 +29,24 @@ module Data.Argonaut.Parser where
 
   import Global (readFloat)
 
-  import Text.Parsing.Parser (fail, runParser, unParserT, Parser(), ParseError(..), ParserT(..))
-  import Text.Parsing.Parser.Combinators ((<?>), many, sepBy, sepBy1, try)
+  import Text.Parsing.Parser
+    ( fail
+    , runParser
+    , unParserT
+    , Parser()
+    , ParseError(..)
+    , ParserT(..)
+    )
+  import Text.Parsing.Parser.Combinators
+    ( (<?>)
+    , between
+    , choice
+    , many
+    , option
+    , sepBy
+    , sepBy1
+    , try
+    )
   import Text.Parsing.Parser.String (char, satisfy, string, whiteSpace)
 
   import qualified Data.Map as M
@@ -74,12 +90,19 @@ module Data.Argonaut.Parser where
     parseJson (Identity str) = parseString str
 
   -- Constants
-  closeBrace = "}"
-  closeBracket = "]"
-  comma = ","
-  doubleQuote = "\""
-  openBrace = "{"
-  openBracket = "["
+  backspace      = "b"
+  carriageReturn = "r"
+  closeBrace     = "}"
+  closeBracket   = "]"
+  comma          = ","
+  doubleQuote    = "\""
+  formfeed       = "f"
+  horizontalTab  = "t"
+  newline        = "n"
+  openBrace      = "{"
+  openBracket    = "["
+  reverseSolidus = "\\"
+  solidus        = "/"
 
   parseMaybe :: forall a. (Parser Identity ParseResult a) => a -> Maybe Json
   parseMaybe x = case parseJson (Identity x) of
@@ -186,21 +209,71 @@ module Data.Argonaut.Parser where
   stringParser = fromString <$> rawStringParser
 
   rawStringParser :: Parser String String
-  rawStringParser = do
+  rawStringParser = try emptyStringParser
+                <|> nonEmptyStringParser
+
+  emptyStringParser :: Parser String String
+  emptyStringParser = skipSpaces *> quoted (pure "")
+
+  nonEmptyStringParser :: Parser String String
+  nonEmptyStringParser = do
     skipSpaces
-    string "\""
-    key <- joinWith "" <$> manyTill char (lookAhead $ string "\"")
-    string "\""
-    pure key
+    joinWith "" <$> quoted (manyTill (try normalChar <|> controlChar) (lookAhead $ string doubleQuote))
+
+  normalChar :: Parser String String
+  normalChar = do
+    c <- lookAhead char
+    case c of
+      "\"" -> invalidJson "unicode character"
+      "\\" -> invalidJson "unicode character"
+      _    -> char
+
+  controlChar :: Parser String String
+  controlChar = do
+    c <- lookAhead char
+    case c of
+      "\\" -> char *> do
+        c' <- lookAhead char
+        case c' of
+          backspace      -> char
+          carriageReturn -> char
+          doubleQuote    -> char
+          formfeed       -> char
+          horizontalTab  -> char
+          newline        -> char
+          reverseSolidus -> char
+          solidus        -> char
+          "u"            -> unicodeParser
+      _ -> invalidJson "control character"
+
+  unicodeParser :: Parser String String
+  unicodeParser = do
+    u <- string "u"
+    one <- hexDigit
+    two <- hexDigit
+    three <- hexDigit
+    four <- hexDigit
+    pure $ u ++ one ++ two ++ three ++ four
+
+  hexDigit :: Parser String String
+  hexDigit = satisfy isHex
+
+  isHex :: String -> Boolean
+  isHex = (||) <$> isDigit <*> isHexAlpha
+
+  isHexAlpha :: String -> Boolean
+  isHexAlpha str = let n = ord str in
+    (65 <= n && n <= 70) || (97 <= n && n <= 102)
 
   valueParser :: Unit -> Parser String Json
-  valueParser _ = try nullParser
-              <|> try booleanParser
-              <|> try stringParser
-              <|> try (objectParser unit)
-              <|> try (arrayParser unit)
-              <|> try numberParser
-              <|> invalidJson "valid JSON"
+  valueParser _ = choice (try <$>
+    [ nullParser
+    , booleanParser
+    , stringParser
+    , (objectParser unit)
+    , (arrayParser unit)
+    , numberParser
+    ])
 
   invalidJson :: forall a. String -> Parser String a
   invalidJson expected = many char >>= \s -> fail $ "Invalid JSON:\n\t" ++
@@ -261,11 +334,11 @@ module Data.Argonaut.Parser where
                 xs <- scan
                 pure (x:xs))
 
-  option :: forall s a m. (Monad m) => a -> ParserT s m a -> ParserT s m a
-  option def p = try p <|> pure def
-
-  between :: forall s a m open close. (Monad m) => ParserT s m open -> ParserT s m close -> ParserT s m a -> ParserT s m a
-  between open close p = open *> p <* close
+  many1Till :: forall s a m e. (Monad m) => ParserT s m a -> ParserT s m e -> ParserT s m [a]
+  many1Till p end = do
+    x <- p
+    xs <- manyTill p end
+    pure (x:xs)
 
   braces :: forall s m a. (Monad m) => ParserT String m a -> ParserT String m a
   braces = between (string openBrace) (string closeBrace)

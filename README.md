@@ -258,13 +258,13 @@
 
     arrayParser :: Unit -> Parser String Json
 
-    between :: forall s a m open close. (Monad m) => ParserT s m open -> ParserT s m close -> ParserT s m a -> ParserT s m a
-
     booleanParser :: Parser String Json
 
     braces :: forall s m a. (Monad m) => ParserT String m a -> ParserT String m a
 
     brackets :: forall m a. (Monad m) => ParserT String m a -> ParserT String m a
+
+    controlChar :: Parser String String
 
     digit :: Parser String String
 
@@ -274,21 +274,31 @@
 
     emptyObjectParser :: Parser String Json
 
+    emptyStringParser :: Parser String String
+
     expParser :: Parser String String
 
     fracParser :: Parser String String
 
     fromEither :: forall a. Either String a -> ParseResult a
 
+    hexDigit :: Parser String String
+
     invalidJson :: forall a. String -> Parser String a
 
     isDigit :: String -> Boolean
+
+    isHex :: String -> Boolean
+
+    isHexAlpha :: String -> Boolean
 
     isoParseEither :: forall a. IsoP (ParseResult a) (Either String a)
 
     jsonParser :: Parser String Json
 
     lookAhead :: forall s a m. (Monad m) => ParserT s m a -> ParserT s m a
+
+    many1Till :: forall s a m e. (Monad m) => ParserT s m a -> ParserT s m e -> ParserT s m [a]
 
     manyTill :: forall s a m e. (Monad m) => ParserT s m a -> ParserT s m e -> ParserT s m [a]
 
@@ -300,7 +310,11 @@
 
     nonEmptyObjectParser :: Unit -> Parser String Json
 
+    nonEmptyStringParser :: Parser String String
+
     noneOf :: forall s m a. (Monad m) => [String] -> ParserT String m String
+
+    normalChar :: Parser String String
 
     nullParser :: Parser String Json
 
@@ -309,8 +323,6 @@
     objectParser :: Unit -> Parser String Json
 
     oneToNine :: String -> Boolean
-
-    option :: forall s a m. (Monad m) => a -> ParserT s m a -> ParserT s m a
 
     ord :: String -> Number
 
@@ -335,6 +347,8 @@
     toEither :: forall a. ParseResult a -> Either String a
 
     undefined :: forall a. a
+
+    unicodeParser :: Parser String String
 
     valueParser :: Unit -> Parser String Json
 
