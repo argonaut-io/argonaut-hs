@@ -7,6 +7,11 @@ module Data.Argonaut.Core where
 
   import qualified Data.Map as M
 
+  data Foo = Foo
+    { foo :: String
+    , bar :: Number
+    }
+
   type JNull    = Unit
   type JBoolean = Boolean
   type JNumber  = Number

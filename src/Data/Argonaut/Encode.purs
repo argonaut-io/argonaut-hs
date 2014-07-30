@@ -2,7 +2,8 @@ module Data.Argonaut.Encode where
 
   import Control.Monad.Identity (runIdentity, Identity(..))
   import Data.Argonaut.Core
-    ( Json()
+    ( Json(..)
+    , Foo(..)
     , fromNull
     , fromBoolean
     , fromNumber
@@ -10,6 +11,7 @@ module Data.Argonaut.Encode where
     , fromArray
     , fromObject
     )
+  import Data.Tuple (Tuple(..))
 
   import qualified Data.Map as M
 
@@ -42,3 +44,10 @@ module Data.Argonaut.Encode where
 
   encodeIdentity :: forall a. (EncodeJson Identity Identity a) => a -> Json
   encodeIdentity = Identity >>> encodeTo >>> runIdentity
+
+  instance showFoo :: Show Foo where
+    show (Foo f) = "Foo(" ++ show f.foo ++ ", " ++ show f.bar ++ ")"
+
+  instance encodeFoo :: EncodeJson Identity Identity Foo where
+    encodeJson (Identity (Foo {foo = f, bar = b})) = Identity $ JsonObject $
+      M.fromList [Tuple "foo" $ JsonString f, Tuple "bar" $ JsonNumber b]

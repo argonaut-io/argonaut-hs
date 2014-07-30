@@ -15,6 +15,9 @@
 
 ### Types
 
+    data Foo where
+      Foo :: { bar :: Number, foo :: String } -> Foo
+
     type JArray  = [Json]
 
     type JAssoc  = Tuple JField Json
@@ -156,6 +159,8 @@
 
 ### Type Class Instances
 
+    instance decodeFoo :: DecodeJson Identity (Either String) Foo
+
     instance decodeJsonIdESDRArray :: DecodeJson Identity (Either String) [Json]
 
     instance decodeJsonIdESDRBoolean :: DecodeJson Identity (Either String) Boolean
@@ -194,6 +199,8 @@
 
 ### Type Class Instances
 
+    instance encodeFoo :: EncodeJson Identity Identity Foo
+
     instance encodeJsonIdIdJArray :: EncodeJson Identity Identity [Json]
 
     instance encodeJsonIdIdJBoolean :: EncodeJson Identity Identity Boolean
@@ -207,6 +214,8 @@
     instance encodeJsonIdIdJString :: EncodeJson Identity Identity String
 
     instance encodeJsonIdIdJson :: EncodeJson Identity Identity Json
+
+    instance showFoo :: Show Foo
 
 
 ### Values
