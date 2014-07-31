@@ -51,11 +51,11 @@ module Data.Argonaut.Core where
            -> (JObject  -> a)
            -> Json
            -> a
-  foldJson jsonNull _ _ _ _ _    (JsonNull    _)   = jsonNull    unit
+  foldJson jsonNull    _ _ _ _ _ (JsonNull    _)   = jsonNull    unit
   foldJson _ jsonBoolean _ _ _ _ (JsonBoolean val) = jsonBoolean val
-  foldJson _ _ jsonNumber _ _ _  (JsonNumber  val) = jsonNumber  val
-  foldJson _ _ _ jsonString _ _  (JsonString  val) = jsonString  val
-  foldJson _ _ _ _ jsonArray _   (JsonArray   val) = jsonArray   val
+  foldJson _ _ jsonNumber  _ _ _ (JsonNumber  val) = jsonNumber  val
+  foldJson _ _ _ jsonString  _ _ (JsonString  val) = jsonString  val
+  foldJson _ _ _ _ jsonArray   _ (JsonArray   val) = jsonArray   val
   foldJson _ _ _ _ _ jsonObject  (JsonObject  val) = jsonObject  val
 
   foldJsonNull :: forall a. a -> (JNull -> a) -> Json -> a

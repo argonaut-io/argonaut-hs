@@ -16,7 +16,7 @@ module Data.Argonaut.Combinators where
 
   import qualified Data.Map as M
 
-  infixl 4 :=
+  infix 7 :=
   infixr 6 ~>
 
   (:=) :: forall a. (EncodeJson Identity Identity a) => String -> a -> JAssoc
