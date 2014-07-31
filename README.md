@@ -180,8 +180,6 @@
 
     arrayIndexL :: forall a. (DecodeJson Identity (Either String) a, EncodeJson Identity Identity a) => JNumber -> TraversalP Json a
 
-    decodeFrom :: forall m a n. (DecodeJson m n a) => m Json -> n a
-
     decodeL :: forall a. (DecodeJson Identity (Either String) a, EncodeJson Identity Identity a) => PrismP Json a
 
     decodeMaybe :: forall a. (DecodeJson Identity (Either String) a) => Json -> Maybe a
@@ -221,8 +219,6 @@
 ### Values
 
     encodeIdentity :: forall a. (EncodeJson Identity Identity a) => a -> Json
-
-    encodeTo :: forall m a n. (EncodeJson m n a) => m a -> n Json
 
 
 ## Module Data.Argonaut.Parser

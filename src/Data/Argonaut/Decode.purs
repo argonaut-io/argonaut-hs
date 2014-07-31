@@ -57,9 +57,6 @@ module Data.Argonaut.Decode where
   instance decodeJsonIdESDRJson :: DecodeJson Identity (Either String) Json where
     decodeJson = runIdentity >>> Right
 
-  decodeFrom :: forall m a n. (DecodeJson m n a) => m Json -> n a
-  decodeFrom = decodeJson
-
   decodeMaybe :: forall a. (DecodeJson Identity (Either String) a) => Json -> Maybe a
   decodeMaybe = Identity >>> decodeJson >>> either ((const Nothing) :: forall a. String -> Maybe a) Just
 
