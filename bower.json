@@ -1,6 +1,6 @@
 {
   "name": "purescript-argonaut",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "PureScript version of Argonaut",
   "license": "MIT",
   "dependencies": {
