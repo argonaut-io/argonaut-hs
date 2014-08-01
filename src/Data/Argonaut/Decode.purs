@@ -14,7 +14,6 @@ module Data.Argonaut.Decode where
     ( Json()
     , JNumber()
     , JString()
-    , Foo(..)
     , arrayL
     , foldJsonNull
     , foldJsonBoolean
@@ -74,10 +73,3 @@ module Data.Argonaut.Decode where
 
   -- arrayMembersL :: forall a. (DecodeJson Identity (Either String) a, EncodeJson Identity Identity a) => IndexedTraversalP JNumber Json a
   -- arrayMembersL = decodeL >>> traversed >>> arrayL
-
-  instance decodeFoo :: DecodeJson Identity (Either String) Foo where
-    decodeJson (Identity json) = maybe (Left "Not a Foo.") Right $ do
-      obj <- toObject json
-      foo <- (M.lookup "foo" obj >>= toString)
-      bar <- (M.lookup "bar" obj >>= toNumber)
-      pure (Foo {foo: foo, bar: bar})

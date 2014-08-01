@@ -1,7 +1,8 @@
 'use strict'
 
-var gulp       = require('gulp')
-  , purescript = require('gulp-purescript')
+var gulp        = require('gulp')
+  , purescript  = require('gulp-purescript')
+  , runSequence = require('run-sequence')
   ;
 
 var paths = {
@@ -11,42 +12,67 @@ var paths = {
       'bower_components/purescript-*/src/**/*.purs.hs'
     ],
     dest: '',
-    docsDest: 'README.md'
+    docs: {
+        'Data.Argonaut': {
+            dest: 'src/Data/README.md',
+            src: 'src/Data/Argonaut.purs'
+        },
+        'Data.Argonaut.*': {
+            dest: 'src/Data/Argonaut/README.md',
+            src: 'src/Data/Argonaut/*.purs'
+        }
+    }
 };
 
 var options = {};
 
-var compile = function(compiler) {
-    var psc = compiler(options);
-    psc.on('error', function(e) {
-        console.error(e.message);
-        psc.end();
-    });
-    return gulp.src([paths.src].concat(paths.bowerSrc))
-        .pipe(psc)
-        .pipe(gulp.dest(paths.dest));
+function compile (compiler) {
+    return function() {
+        var psc = compiler(options);
+        psc.on('error', function(e) {
+            console.error(e.message);
+            psc.end();
+        });
+        return gulp.src([paths.src].concat(paths.bowerSrc))
+            .pipe(psc)
+            .pipe(gulp.dest(paths.dest));
+    }
 };
 
-gulp.task('make', function() {
-    return compile(purescript.pscMake);
-});
+function docs (target) {
+    return function() {
+        var docgen = purescript.docgen();
+        docgen.on('error', function(e) {
+            console.error(e.message);
+            docgen.end();
+        });
+        return gulp.src(paths.docs[target].src)
+            .pipe(docgen)
+            .pipe(gulp.dest(paths.docs[target].dest));
+    }
+}
 
-gulp.task('browser', function() {
-    return compile(purescript.psc);
-});
+function sequence () {
+    var args = [].slice.apply(arguments);
+    return function() {
+        runSequence.apply(null, args);
+    }
+}
 
-gulp.task('docs', function() {
-    return gulp.src(paths.src)
-      .pipe(purescript.docgen())
-      .pipe(gulp.dest(paths.docsDest));
-});
+gulp.task('browser', compile(purescript.psc));
+gulp.task('make', compile(purescript.pscMake));
+
+gulp.task('docs-Data.Argonaut', docs('Data.Argonaut'));
+gulp.task('docs-Data.Argonaut.*', docs('Data.Argonaut.*'));
+
+gulp.task('docs', ['docs-Data.Argonaut', 'docs-Data.Argonaut.*']);
 
 gulp.task('watch-browser', function() {
-    gulp.watch(paths.src, ['browser', 'docs']);
+    gulp.watch(paths.src, sequence('browser', 'docs'));
 });
 
 gulp.task('watch-make', function() {
-    gulp.watch(paths.src, ['make', 'docs']);
+    gulp.watch(paths.src, sequence('make', 'docs'));
 });
 
-gulp.task('default', ['make', 'docs']);
+gulp.task('default', sequence('make', 'docs'));
