@@ -1,7 +1,10 @@
 module Data.Argonaut
+  -- Combinators
+  ( (:=)
+  , (~>)
   -- Core
   -- Folds
-  ( foldJson
+  , foldJson
   , foldJsonNull
   , foldJsonBoolean
   , foldJsonNumber
@@ -63,15 +66,24 @@ module Data.Argonaut
   , encodeJson
   -- Parser
   , jsonParser
-  --
+  -- Printer
   , printJson
   ) where
 
+  import qualified Data.Argonaut.Combinators as Combinators
   import qualified Data.Argonaut.Core as Core
   import qualified Data.Argonaut.Decode as Decode
   import qualified Data.Argonaut.Encode as Encode
   import qualified Data.Argonaut.Parser as Parser
   import qualified Data.Argonaut.Printer as Printer
+
+  -- | Combinators
+
+  infix 7 :=
+  infixr 6 ~>
+
+  (:=) = Combinators.(:=)
+  (~>) = Combinators.(~>)
 
   -- | Core
 
