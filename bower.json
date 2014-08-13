@@ -11,5 +11,8 @@
     "purescript-parsing": "*",
     "purescript-maps": "~0.0.4",
     "purescript-globals": "~0.1.4"
+  },
+  "devDependencies": {
+    "purescript-quickcheck": "~0.1.2"
   }
 }

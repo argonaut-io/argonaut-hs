@@ -1,6 +1,7 @@
-module Data.Argonaut.Printer where
-
-  import Control.Monad.Identity (runIdentity, Identity(..))
+module Data.Argonaut.Printer
+  ( Printer
+  , printJson
+  ) where
 
   import Data.Argonaut.Core
     ( foldJson
@@ -18,20 +19,11 @@ module Data.Argonaut.Printer where
 
   import qualified Data.Map as M
 
-  class Printer m n a where
-    printJson :: m Json -> n a
+  class Printer a where
+    printJson :: Json -> a
 
-  instance printerIdIdJNull :: Printer Identity Identity String where
-    printJson = runIdentity >>> stringify >>> Identity
-
-  printTo :: forall m a n. (Printer m n a) => m Json -> n a
-  printTo = printJson
-
-  printIdentity :: forall a. (Printer Identity Identity a) => Json -> a
-  printIdentity = Identity >>> printTo >>> runIdentity
-
-  printToString :: Json -> String
-  printToString = printIdentity
+  instance printerJNull :: Printer String where
+    printJson = stringify
 
   stringify :: Json -> String
   stringify json = foldJson stringifyNull
@@ -74,4 +66,4 @@ module Data.Argonaut.Printer where
 
   -- Orphan instance
   instance showJson :: Show Json where
-    show = printToString
+    show = printJson

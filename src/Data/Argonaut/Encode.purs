@@ -1,6 +1,8 @@
-module Data.Argonaut.Encode where
+module Data.Argonaut.Encode
+  ( EncodeJson
+  , encodeJson
+  ) where
 
-  import Control.Monad.Identity (runIdentity, Identity(..))
   import Data.Argonaut.Core
     ( Json(..)
     , fromNull
@@ -10,33 +12,29 @@ module Data.Argonaut.Encode where
     , fromArray
     , fromObject
     )
-  import Data.Tuple (Tuple(..))
 
   import qualified Data.Map as M
 
-  class EncodeJson m n a where
-    encodeJson :: m a -> n Json
+  class EncodeJson a where
+    encodeJson :: a -> Json
 
-  instance encodeJsonIdIdJNull :: EncodeJson Identity Identity Unit where
-    encodeJson = runIdentity >>> fromNull >>> Identity
+  instance encodeJsonJNull :: EncodeJson Unit where
+    encodeJson = fromNull
 
-  instance encodeJsonIdIdJBoolean :: EncodeJson Identity Identity Boolean where
-    encodeJson = runIdentity >>> fromBoolean >>> Identity
+  instance encodeJsonJBoolean :: EncodeJson Boolean where
+    encodeJson = fromBoolean
 
-  instance encodeJsonIdIdJNumber :: EncodeJson Identity Identity Number where
-    encodeJson = runIdentity >>> fromNumber >>> Identity
+  instance encodeJsonJNumber :: EncodeJson Number where
+    encodeJson = fromNumber
 
-  instance encodeJsonIdIdJString :: EncodeJson Identity Identity String where
-    encodeJson = runIdentity >>> fromString >>> Identity
+  instance encodeJsonJString :: EncodeJson String where
+    encodeJson = fromString
 
-  instance encodeJsonIdIdJArray :: EncodeJson Identity Identity [Json] where
-    encodeJson = runIdentity >>> fromArray >>> Identity
+  instance encodeJsonJArray :: EncodeJson [Json] where
+    encodeJson = fromArray
 
-  instance encodeJsonIdIdJObject :: EncodeJson Identity Identity (M.Map String Json) where
-    encodeJson = runIdentity >>> fromObject >>> Identity
+  instance encodeJsonJObject :: EncodeJson (M.Map String Json) where
+    encodeJson = fromObject
 
-  instance encodeJsonIdIdJson :: EncodeJson Identity Identity Json where
-    encodeJson = runIdentity >>> Identity
-
-  encodeIdentity :: forall a. (EncodeJson Identity Identity a) => a -> Json
-  encodeIdentity = Identity >>> encodeJson >>> runIdentity
+  instance encodeJsonJson :: EncodeJson Json where
+    encodeJson = id

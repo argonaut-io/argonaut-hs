@@ -1,7 +1,7 @@
-module Data.Argonaut.Combinators where
-
-  import Control.Lens (_1, _2)
-  import Control.Monad.Identity (Identity())
+module Data.Argonaut.Combinators
+  ( (:=)
+  , (~>)
+  ) where
 
   import Data.Argonaut.Core
     ( foldJsonObject
@@ -9,9 +9,8 @@ module Data.Argonaut.Combinators where
     , jsonSingletonObject
     , Json()
     , JAssoc()
-    , JField()
     )
-  import Data.Argonaut.Encode (encodeIdentity, EncodeJson)
+  import Data.Argonaut.Encode (encodeJson, EncodeJson)
   import Data.Tuple (Tuple(..))
 
   import qualified Data.Map as M
@@ -19,8 +18,8 @@ module Data.Argonaut.Combinators where
   infix 7 :=
   infixr 6 ~>
 
-  (:=) :: forall a. (EncodeJson Identity Identity a) => String -> a -> JAssoc
-  (:=) key val = Tuple key $ encodeIdentity val
+  (:=) :: forall a. (EncodeJson a) => String -> a -> JAssoc
+  (:=) k v = Tuple k $ encodeJson v
 
   (~>) :: JAssoc -> Json -> Json
   (~>) (Tuple k v) = foldJsonObject (jsonSingletonObject k v) (M.insert k v >>> fromObject)

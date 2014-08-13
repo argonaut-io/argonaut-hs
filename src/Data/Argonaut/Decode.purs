@@ -1,4 +1,12 @@
-module Data.Argonaut.Decode where
+module Data.Argonaut.Decode
+  ( DecodeJson
+  , decodeJson
+  , decodeMaybe
+  -- Lenses
+  , decodeL
+  , arrayIndexL
+  , objectFieldL
+  ) where
 
   import Control.Lens
     ( ix
@@ -8,7 +16,6 @@ module Data.Argonaut.Decode where
     , PrismP()
     , TraversalP()
     )
-  import Control.Monad.Identity (runIdentity, Identity(..))
 
   import Data.Argonaut.Core
     ( Json()
@@ -26,50 +33,50 @@ module Data.Argonaut.Decode where
     , toString
     , toNumber
     )
-  import Data.Argonaut.Encode (encodeIdentity, EncodeJson)
+  import Data.Argonaut.Encode (encodeJson, EncodeJson)
   import Data.Either (either, Either(..))
   import Data.Maybe (maybe, Maybe(..))
 
   import qualified Data.Map as M
 
-  class DecodeJson m n a where
-    decodeJson :: m Json -> n a
+  class DecodeJson a where
+    decodeJson :: Json -> Either String a
 
-  instance decodeJsonIdESDRNull :: DecodeJson Identity (Either String) Unit where
-    decodeJson = runIdentity >>> foldJsonNull (Left "Not null.") Right
+  instance decodeJsonNull :: DecodeJson Unit where
+    decodeJson = foldJsonNull (Left "Not null.") Right
 
-  instance decodeJsonIdESDRBoolean :: DecodeJson Identity (Either String) Boolean where
-    decodeJson = runIdentity >>> foldJsonBoolean (Left "Not a Boolean.") Right
+  instance decodeJsonBoolean :: DecodeJson Boolean where
+    decodeJson = foldJsonBoolean (Left "Not a Boolean.") Right
 
-  instance decodeJsonIdESDRNumber :: DecodeJson Identity (Either String) Number where
-    decodeJson = runIdentity >>> foldJsonNumber (Left "Not a Number.") Right
+  instance decodeJsonNumber :: DecodeJson Number where
+    decodeJson = foldJsonNumber (Left "Not a Number.") Right
 
-  instance decodeJsonIdESDRString :: DecodeJson Identity (Either String) String where
-    decodeJson = runIdentity >>> foldJsonString (Left "Not a String.") Right
+  instance decodeJsonString :: DecodeJson String where
+    decodeJson = foldJsonString (Left "Not a String.") Right
 
-  instance decodeJsonIdESDRArray :: DecodeJson Identity (Either String) [Json] where
-    decodeJson = runIdentity >>> foldJsonArray (Left "Not a Array.") Right
+  instance decodeJsonArray :: DecodeJson [Json] where
+    decodeJson = foldJsonArray (Left "Not a Array.") Right
 
-  instance decodeJsonIdESDRObject :: DecodeJson Identity (Either String) (M.Map String Json) where
-    decodeJson = runIdentity >>> foldJsonObject (Left "Not a Object.") Right
+  instance decodeJsonObject :: DecodeJson (M.Map String Json) where
+    decodeJson = foldJsonObject (Left "Not a Object.") Right
 
-  instance decodeJsonIdESDRJson :: DecodeJson Identity (Either String) Json where
-    decodeJson = runIdentity >>> Right
+  instance decodeJsonJson :: DecodeJson Json where
+    decodeJson = Right
 
-  decodeMaybe :: forall a. (DecodeJson Identity (Either String) a) => Json -> Maybe a
-  decodeMaybe = Identity >>> decodeJson >>> either ((const Nothing) :: forall a. String -> Maybe a) Just
+  decodeMaybe :: forall a. (DecodeJson a) => Json -> Maybe a
+  decodeMaybe json = decodeJson json # either ((const Nothing) :: forall a. String -> Maybe a) Just
 
-  decodeL :: forall a. (DecodeJson Identity (Either String) a, EncodeJson Identity Identity a) => PrismP Json a
-  decodeL = prism' encodeIdentity decodeMaybe
+  decodeL :: forall a. (DecodeJson a, EncodeJson a) => PrismP Json a
+  decodeL = prism' encodeJson decodeMaybe
 
-  arrayIndexL :: forall a. (DecodeJson Identity (Either String) a, EncodeJson Identity Identity a) => JNumber -> TraversalP Json a
+  arrayIndexL :: forall a. (DecodeJson a, EncodeJson a) => JNumber -> TraversalP Json a
   arrayIndexL i = decodeL >>> ix i >>> arrayL
 
-  objectFieldL :: forall a. (DecodeJson Identity (Either String) a, EncodeJson Identity Identity a) => JString -> TraversalP Json a
+  objectFieldL :: forall a. (DecodeJson a, EncodeJson a) => JString -> TraversalP Json a
   objectFieldL key = decodeL >>> ix key >>> objectL
 
-  -- objectMembersL :: forall a. (DecodeJson Identity (Either String) a, EncodeJson Identity Identity a) => IndexedTraversalP JString Json a
+  -- objectMembersL :: forall a. (DecodeJson a, EncodeJson a) => IndexedTraversalP JString Json a
   -- objectMembersL = decodeL >>> itraversed >>> objectL
 
-  -- arrayMembersL :: forall a. (DecodeJson Identity (Either String) a, EncodeJson Identity Identity a) => IndexedTraversalP JNumber Json a
+  -- arrayMembersL :: forall a. (DecodeJson a, EncodeJson a) => IndexedTraversalP JNumber Json a
   -- arrayMembersL = decodeL >>> traversed >>> arrayL

@@ -1,4 +1,4 @@
-module Data.Argonaut.Parser where
+module Data.Argonaut.Parser (jsonParser) where
 
   import Control.Apply ((<*), (*>))
   import Control.Lens (iso, IsoP())
@@ -51,44 +51,6 @@ module Data.Argonaut.Parser where
 
   import qualified Data.Map as M
 
-  foreign import undefined :: forall a. a
-
-  class Parser m n a where
-    parseJson :: m a -> n Json
-
-  parseFrom :: forall m a n. (Parser m n a) => m a -> n Json
-  parseFrom = parseJson
-
-  data ParseResult a = ParseFailure String
-                     | ParseSuccess a
-
-  instance eqParseResult :: (Eq a) => Eq (ParseResult a) where
-    (==) (ParseFailure str) (ParseFailure str') = str == str'
-    (==) (ParseSuccess a)   (ParseSuccess a')   = a   == a'
-
-    (/=) pr                 pr'                 = not (pr == pr')
-
-  instance showParseResult :: (Show a) => Show (ParseResult a) where
-    show (ParseFailure str) = str
-    show (ParseSuccess a)   = show a
-
-  instance functorParseResult :: Functor ParseResult where
-    (<$>) f x = fromEither (f <$> toEither x)
-
-  instance applyParseResult :: Apply ParseResult where
-    (<*>) f x = fromEither (toEither f <*> toEither x)
-
-  instance bindParseResult :: Bind ParseResult where
-    (>>=) m f = fromEither (toEither m >>= (f >>> toEither))
-
-  instance applicativeParseResult :: Applicative ParseResult where
-    pure = ParseSuccess
-
-  instance monadParseResult :: Monad ParseResult
-
-  instance parserIdParseResultString :: Parser Identity ParseResult String where
-    parseJson (Identity str) = parseString str
-
   -- Constants
   backspace      = "b"
   carriageReturn = "r"
@@ -103,16 +65,6 @@ module Data.Argonaut.Parser where
   openBracket    = "["
   reverseSolidus = "\\"
   solidus        = "/"
-
-  parseMaybe :: forall a. (Parser Identity ParseResult a) => a -> Maybe Json
-  parseMaybe x = case parseJson (Identity x) of
-    ParseFailure _ -> Nothing
-    ParseSuccess x -> Just x
-
-  parseString :: String -> ParseResult Json
-  parseString str = case runParser str jsonParser of
-    Left  (ParseError {message = err})  -> ParseFailure err
-    Right json -> ParseSuccess json
 
   jsonParser :: Parser String Json
   jsonParser = do
@@ -348,16 +300,3 @@ module Data.Argonaut.Parser where
 
   quoted :: forall m a. (Monad m) => ParserT String m a -> ParserT String m a
   quoted = between (string doubleQuote) (string doubleQuote)
-
-  -- Iso between `ParseResult a` and `Either String a`
-
-  isoParseEither :: forall a. IsoP (ParseResult a) (Either String a)
-  isoParseEither = iso toEither fromEither
-
-  toEither :: forall a. ParseResult a -> Either String a
-  toEither (ParseFailure str) = Left str
-  toEither (ParseSuccess x)   = Right x
-
-  fromEither :: forall a. Either String a -> ParseResult a
-  fromEither (Left str) = ParseFailure str
-  fromEither (Right x)  = ParseSuccess x
