@@ -1,8 +1,7 @@
 module Test.Data.Argonaut where
 
-  import Data.Argonaut.Core
-  import Data.Argonaut.Encode
-  import Data.Argonaut.Decode
+  import Data.Argonaut
+  import Data.Argonaut.Core (Json())
   import Data.Either
 
   import Test.QuickCheck
