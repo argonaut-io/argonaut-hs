@@ -8,12 +8,12 @@
     "purescript-maybe": "~0.2.0",
     "purescript-tuples": "~0.2.0",
     "purescript-maps": "~0.0.4",
-    "purescript-lens": "~0.0.3",
     "purescript-foldable-traversable": "~0.1.3",
     "purescript-strings": "~0.2.1",
     "purescript-globals": "~0.1.5",
     "purescript-parsing": "~0.1.0",
-    "purescript-control": "~0.2.0"
+    "purescript-control": "~0.2.0",
+    "purescript-lens": "~0.1.0"
   },
   "devDependencies": {
     "purescript-quickcheck": "~0.1.2"
