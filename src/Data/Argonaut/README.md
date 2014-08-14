@@ -6,6 +6,8 @@
 
     (:=) :: forall a. (EncodeJson a) => String -> a -> JAssoc
 
+    (?>>=) :: forall a b. Maybe a -> String -> Either String a
+
     (~>) :: JAssoc -> Json -> Json
 
 

@@ -1,8 +1,9 @@
 module Data.Argonaut.Parser (jsonParser) where
 
+  import Control.Alt ((<|>))
+  import Control.Alternative (many)
   import Control.Apply ((<*), (*>))
   import Control.Lens (iso, IsoP())
-  import Control.Monad.Identity (Identity(..))
 
   import Data.Argonaut.Core
     ( fromArray
@@ -41,7 +42,6 @@ module Data.Argonaut.Parser (jsonParser) where
     ( (<?>)
     , between
     , choice
-    , many
     , option
     , sepBy
     , sepBy1
