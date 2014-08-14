@@ -29,13 +29,17 @@ module Data.Argonaut.Decode
     , foldJsonArray
     , foldJsonObject
     , objectL
+    , toArray
+    , toNumber
     , toObject
     , toString
-    , toNumber
     )
   import Data.Argonaut.Encode (encodeJson, EncodeJson)
   import Data.Either (either, Either(..))
   import Data.Maybe (maybe, Maybe(..))
+  import Data.Foldable (Foldable, foldl, foldMap, foldr)
+  import Data.Traversable (Traversable, traverse)
+  import Data.Tuple (uncurry)
 
   import qualified Data.Map as M
 
@@ -57,11 +61,18 @@ module Data.Argonaut.Decode
   instance decodeJsonArray :: DecodeJson [Json] where
     decodeJson = foldJsonArray (Left "Not a Array.") Right
 
-  instance decodeJsonObject :: DecodeJson (M.Map String Json) where
-    decodeJson = foldJsonObject (Left "Not a Object.") Right
-
   instance decodeJsonJson :: DecodeJson Json where
     decodeJson = Right
+
+  instance decodeMap :: (DecodeJson a) => DecodeJson (M.Map String a) where
+    decodeJson json = maybe (Left "Couldn't decode.") Right $ do
+      obj <- toObject json
+      traverse decodeMaybe obj
+
+  instance decodeArray :: (DecodeJson a) => DecodeJson [a] where
+    decodeJson json = maybe (Left "Couldn't decode.") Right $ do
+      obj <- toArray json
+      traverse decodeMaybe obj
 
   decodeMaybe :: forall a. (DecodeJson a) => Json -> Maybe a
   decodeMaybe json = decodeJson json # either ((const Nothing) :: forall a. String -> Maybe a) Just
@@ -80,3 +91,16 @@ module Data.Argonaut.Decode
 
   -- arrayMembersL :: forall a. (DecodeJson a, EncodeJson a) => IndexedTraversalP JNumber Json a
   -- arrayMembersL = decodeL >>> traversed >>> arrayL
+
+  -- Orphans
+
+  -- Should move these orphans to purescript-foldable-traversable.
+
+  instance foldableMap :: Foldable (M.Map k) where
+    foldr f z ms = foldr f z $ M.values ms
+    foldl f z ms = foldl f z $ M.values ms
+    foldMap f ms = foldMap f $ M.values ms
+
+  instance traversableMap :: (Ord k) => Traversable (M.Map k) where
+    traverse f ms = foldr (\x acc -> M.union <$> x <*> acc) (pure M.empty) ((\fs -> uncurry M.singleton <$> fs) <$> (traverse f <$> M.toList ms))
+    sequence = traverse id

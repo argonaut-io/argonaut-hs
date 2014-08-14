@@ -5,13 +5,19 @@ module Data.Argonaut.Encode
 
   import Data.Argonaut.Core
     ( Json(..)
+    , foldJsonObject
     , fromNull
     , fromBoolean
     , fromNumber
     , fromString
     , fromArray
     , fromObject
+    , jsonEmptyArray
+    , jsonEmptyObject
+    , jsonSingletonObject
     )
+  import Data.Foldable (foldr)
+  import Data.Tuple (Tuple(..))
 
   import qualified Data.Map as M
 
@@ -30,11 +36,15 @@ module Data.Argonaut.Encode
   instance encodeJsonJString :: EncodeJson String where
     encodeJson = fromString
 
-  instance encodeJsonJArray :: EncodeJson [Json] where
-    encodeJson = fromArray
-
-  instance encodeJsonJObject :: EncodeJson (M.Map String Json) where
-    encodeJson = fromObject
-
   instance encodeJsonJson :: EncodeJson Json where
     encodeJson = id
+
+  instance encodeJsonArray :: (EncodeJson a) => EncodeJson [a] where
+    encodeJson json = fromArray (encodeJson <$> json)
+
+  instance encodeMap :: (EncodeJson a) => EncodeJson (M.Map String a) where
+    encodeJson json = foldr append jsonEmptyObject (assoc <$> M.toList json)
+      where
+        append (Tuple k v) =
+          foldJsonObject (jsonSingletonObject k v) (M.insert k v >>> fromObject)
+        assoc (Tuple k v) = Tuple k $ encodeJson v
