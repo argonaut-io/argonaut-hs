@@ -13,7 +13,7 @@
     "purescript-globals": "~0.1.5",
     "purescript-parsing": "~0.1.0",
     "purescript-control": "~0.2.0",
-    "purescript-lens": "~0.1.0"
+    "purescript-lens": "~0.2.0"
   },
   "devDependencies": {
     "purescript-quickcheck": "~0.1.2"

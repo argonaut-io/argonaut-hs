@@ -156,6 +156,8 @@
 
 ### Type Class Instances
 
+    instance decodeArray :: (DecodeJson a) => DecodeJson [a]
+
     instance decodeJsonArray :: DecodeJson [Json]
 
     instance decodeJsonBoolean :: DecodeJson Boolean
@@ -166,9 +168,13 @@
 
     instance decodeJsonNumber :: DecodeJson Number
 
-    instance decodeJsonObject :: DecodeJson (M.Map String Json)
-
     instance decodeJsonString :: DecodeJson String
+
+    instance decodeMap :: (DecodeJson a) => DecodeJson (M.Map String a)
+
+    instance foldableMap :: Foldable (M.Map k)
+
+    instance traversableMap :: (Ord k) => Traversable (M.Map k)
 
 
 ### Values
@@ -192,7 +198,7 @@
 
 ### Type Class Instances
 
-    instance encodeJsonJArray :: EncodeJson [Json]
+    instance encodeJsonArray :: (EncodeJson a) => EncodeJson [a]
 
     instance encodeJsonJBoolean :: EncodeJson Boolean
 
@@ -200,11 +206,11 @@
 
     instance encodeJsonJNumber :: EncodeJson Number
 
-    instance encodeJsonJObject :: EncodeJson (M.Map String Json)
-
     instance encodeJsonJString :: EncodeJson String
 
     instance encodeJsonJson :: EncodeJson Json
+
+    instance encodeMap :: (EncodeJson a) => EncodeJson (M.Map String a)
 
 
 ## Module Data.Argonaut.Parser
