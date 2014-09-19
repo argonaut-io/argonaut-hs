@@ -4,38 +4,56 @@ module Data.Argonaut.Core where
 
   import Data.Maybe (Maybe(..))
   import Data.Tuple (Tuple(..))
+  import qualified Data.StrMap as M
+  import Data.Function
 
-  import qualified Data.Map as M
+  foreign import data JNull :: *
 
-  type JNull    = Unit
+  instance eqJNull :: Eq JNull where
+    (==) n1 n2 = true
+
+    (/=) n1 n2 = false 
+
   type JBoolean = Boolean
   type JNumber  = Number
   type JString  = String
   type JField   = String
   type JAssoc   = Tuple JField Json
   type JArray   = [Json]
-  type JObject  = M.Map JField Json
+  type JObject  = M.StrMap Json
 
-  data Json = JsonNull    JNull
-            | JsonBoolean JBoolean
-            -- FIXME: This should be a scientific notation number
-            | JsonNumber  JNumber
-            | JsonString  JString
-            | JsonArray   JArray
-            | JsonObject  JObject
+  foreign import data Json :: *
+
+  foreign import _stringify "function _stringify(j){ return JSON.stringify(j); }" :: Json -> String
+
+  instance showJson :: Show Json where
+    show = _stringify
+
+  testType :: forall a. (Eq a) => (forall b. b -> (a -> b) -> Json -> b) -> Json -> (a -> Boolean)
+  testType f j = \v1 -> f false (\v2 -> v1 == v2) j
 
   instance eqJson :: Eq Json where
-    (==) (JsonNull    _) (JsonNull    _)  = true
-    (==) (JsonBoolean b) (JsonBoolean b') = b == b'
-    (==) (JsonNumber  n) (JsonNumber  n') = n == n'
-    (==) (JsonString  s) (JsonString  s') = s == s'
-    (==) (JsonArray   a) (JsonArray   a') = a == a'
-    (==) (JsonObject  o) (JsonObject  o') = o == o'
-    (==) _               _                = false
+    (==) j1 j2 = foldJson a b c d e f j1 where 
+      a = testType foldJsonNull j2
+      b = testType foldJsonBoolean j2
+      c = testType foldJsonNumber j2
+      d = testType foldJsonString j2
+      e = testType foldJsonArray j2
+      f = testType foldJsonObject j2
 
-    (/=) j               j'               = not (j == j')
+    (/=) j j' = not (j == j')
 
   -- Folds
+
+  foreign import _foldJson
+    "function _foldJson(isNull, isBool, isNum, isStr, isArr, isObj, j) {\
+    \   if (j == null) return isNull({});                               \
+    \   else if (typeof j === 'boolean') return isBool(j);              \
+    \   else if (typeof j === 'number') return isNum(j);                \
+    \   else if (typeof j === 'string') return isStr(j);                \
+    \   else if (j instanceof Array) return isArr(j);                   \
+    \   else return isObj(j);                                           \
+    \}" :: forall z. Fn7 (JNull -> z) (JBoolean -> z) (JNumber -> z) (JString -> z) (JArray -> z) (JObject -> z) Json z
 
   foldJson :: forall a
            .  (JNull    -> a)
@@ -46,36 +64,25 @@ module Data.Argonaut.Core where
            -> (JObject  -> a)
            -> Json
            -> a
-  foldJson jsonNull    _ _ _ _ _ (JsonNull    _)   = jsonNull    unit
-  foldJson _ jsonBoolean _ _ _ _ (JsonBoolean val) = jsonBoolean val
-  foldJson _ _ jsonNumber  _ _ _ (JsonNumber  val) = jsonNumber  val
-  foldJson _ _ _ jsonString  _ _ (JsonString  val) = jsonString  val
-  foldJson _ _ _ _ jsonArray   _ (JsonArray   val) = jsonArray   val
-  foldJson _ _ _ _ _ jsonObject  (JsonObject  val) = jsonObject  val
+  foldJson a b c d e f json = runFn7 _foldJson a b c d e f json
 
   foldJsonNull :: forall a. a -> (JNull -> a) -> Json -> a
-  foldJsonNull _   f (JsonNull _) = f unit
-  foldJsonNull def _ _            = def
+  foldJsonNull d f = foldJson f (const d) (const d) (const d) (const d) (const d)
 
   foldJsonBoolean :: forall a. a -> (JBoolean -> a) -> Json -> a
-  foldJsonBoolean _   f (JsonBoolean val) = f val
-  foldJsonBoolean def _ _                 = def
+  foldJsonBoolean d f = foldJson (const d) f (const d) (const d) (const d) (const d)
 
   foldJsonNumber :: forall a. a -> (JNumber -> a) -> Json -> a
-  foldJsonNumber _   f (JsonNumber val) = f val
-  foldJsonNumber def _ _                = def
+  foldJsonNumber d f = foldJson (const d) (const d) f (const d) (const d) (const d)
 
   foldJsonString :: forall a. a -> (JString -> a) -> Json -> a
-  foldJsonString _   f (JsonString val) = f val
-  foldJsonString def _ _                = def
+  foldJsonString d f = foldJson (const d) (const d) (const d) f (const d) (const d)
 
   foldJsonArray :: forall a. a -> (JArray -> a) -> Json -> a
-  foldJsonArray _   f (JsonArray val) = f val
-  foldJsonArray def _ _               = def
+  foldJsonArray d f = foldJson (const d) (const d) (const d) (const d) f (const d)
 
   foldJsonObject :: forall a. a -> (JObject -> a) -> Json -> a
-  foldJsonObject _   f (JsonObject val) = f val
-  foldJsonObject def _ _                = def
+  foldJsonObject d f = foldJson (const d) (const d) (const d) (const d) (const d) f
 
   verbJsonType :: forall a b
                .  b
@@ -129,19 +136,13 @@ module Data.Argonaut.Core where
 
   -- Encoding
 
-  fromNull :: JNull -> Json
-  fromNull = JsonNull
-  fromBoolean :: JBoolean -> Json
-  fromBoolean = JsonBoolean
-  fromNumber :: JNumber -> Json
-  fromNumber = JsonNumber
-  fromString :: JString -> Json
-  fromString = JsonString
-  fromArray :: JArray -> Json
-  fromArray = JsonArray
-  fromObject :: JObject -> Json
-  fromObject = JsonObject
-
+  foreign import fromNull     "function fromNull(_){return null;}"    :: JNull -> Json
+  foreign import fromBoolean  "function fromBoolean(b){return b;}"  :: JBoolean -> Json
+  foreign import fromNumber   "function fromNumber(n){return n;}"   :: JNumber -> Json
+  foreign import fromString   "function fromString(s){return s;}"   :: JString -> Json
+  foreign import fromArray    "function fromArray(a){return a;}"    :: JArray -> Json
+  foreign import fromObject   "function fromObject(o){return o;}"   :: JObject -> Json
+  
   -- Default values
 
   jsonTrue :: Json
@@ -150,8 +151,7 @@ module Data.Argonaut.Core where
   jsonFalse = fromBoolean false
   jsonZero :: Json
   jsonZero = fromNumber 0
-  jsonNull :: Json
-  jsonNull = fromNull unit
+  foreign import jsonNull "var jsonNull = null;" :: Json 
   jsonEmptyString :: Json
   jsonEmptyString = fromString ""
   jsonEmptyArray :: Json

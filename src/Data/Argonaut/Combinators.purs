@@ -16,7 +16,7 @@ module Data.Argonaut.Combinators
   import Data.Maybe (Maybe(..))
   import Data.Tuple (Tuple(..))
 
-  import qualified Data.Map as M
+  import qualified Data.StrMap as M
 
   infix  7 :=
   infixr 6 ~>

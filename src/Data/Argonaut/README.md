@@ -23,29 +23,31 @@
 
     type JField  = String
 
-    type JNull  = Unit
+    data JNull :: *
 
     type JNumber  = Number
 
-    type JObject  = M.Map JField Json
+    type JObject  = M.StrMap Json
 
     type JString  = String
 
-    data Json where
-      JsonNull :: JNull -> Json
-      JsonBoolean :: JBoolean -> Json
-      JsonNumber :: JNumber -> Json
-      JsonString :: JString -> Json
-      JsonArray :: JArray -> Json
-      JsonObject :: JObject -> Json
+    data Json :: *
 
 
 ### Type Class Instances
 
+    instance eqJNull :: Eq JNull
+
     instance eqJson :: Eq Json
+
+    instance showJson :: Show Json
 
 
 ### Values
+
+    _foldJson :: forall z. Fn7 (JNull -> z) (JBoolean -> z) (JNumber -> z) (JString -> z) (JArray -> z) (JObject -> z) Json z
+
+    _stringify :: Json -> String
 
     arrayL :: PrismP Json JArray
 
@@ -129,6 +131,8 @@
 
     stringL :: PrismP Json JString
 
+    testType :: forall a. (Eq a) => (forall b. b -> (a -> b) -> Json -> b) -> Json -> a -> Boolean
+
     toArray :: Json -> Maybe JArray
 
     toBoolean :: Json -> Maybe JBoolean
@@ -170,11 +174,11 @@
 
     instance decodeJsonString :: DecodeJson String
 
-    instance decodeMap :: (DecodeJson a) => DecodeJson (M.Map String a)
+    instance decodeMap :: (DecodeJson a) => DecodeJson (M.StrMap a)
 
-    instance foldableMap :: Foldable (M.Map k)
+    instance foldableMap :: Foldable M.StrMap
 
-    instance traversableMap :: (Ord k) => Traversable (M.Map k)
+    instance traversableMap :: Traversable M.StrMap
 
 
 ### Values
@@ -210,22 +214,14 @@
 
     instance encodeJsonJson :: EncodeJson Json
 
-    instance encodeMap :: (EncodeJson a) => EncodeJson (M.Map String a)
+    instance encodeMap :: (EncodeJson a) => EncodeJson (M.StrMap a)
 
 
 ## Module Data.Argonaut.Parser
 
-### Types
-
-
-### Type Class Instances
-
-    instance showParseError :: Show ParseError
-
-
 ### Values
 
-    jsonParser :: Parser String Json
+    jsonParser :: String -> Either String Json
 
 
 ## Module Data.Argonaut.Printer
@@ -238,12 +234,7 @@
 
 ### Type Class Instances
 
-    instance printerJNull :: Printer String
-
-    instance showJson :: Show Json
-
-
-### Values
+    instance printerString :: Printer String
 
 
 
