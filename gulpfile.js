@@ -2,6 +2,7 @@
 
 var gulp        = require('gulp')
   , purescript  = require('gulp-purescript')
+  , run         = require('gulp-run')
   , runSequence = require('run-sequence')
   ;
 
@@ -21,22 +22,26 @@ var paths = {
             dest: 'src/Data/Argonaut/README.md',
             src: 'src/Data/Argonaut/*.purs'
         }
+    },
+    test: 'test/**/*.purs'
+};
+
+var options = {
+    test: {
+        main: 'Test.Data.Argonaut',
+        output: 'test/test.js'
     }
 };
 
-var options = {};
-
-function compile (compiler) {
-    return function() {
-        var psc = compiler(options);
-        psc.on('error', function(e) {
-            console.error(e.message);
-            psc.end();
-        });
-        return gulp.src([paths.src].concat(paths.bowerSrc))
-            .pipe(psc)
-            .pipe(gulp.dest(paths.dest));
-    }
+function compile (compiler, src, opts) {
+    var psc = compiler(opts);
+    psc.on('error', function(e) {
+        console.error(e.message);
+        psc.end();
+    });
+    return gulp.src(src.concat(paths.bowerSrc))
+        .pipe(psc)
+        .pipe(gulp.dest(paths.dest));
 };
 
 function docs (target) {
@@ -59,8 +64,18 @@ function sequence () {
     }
 }
 
-gulp.task('browser', compile(purescript.psc));
-gulp.task('make', compile(purescript.pscMake));
+gulp.task('browser', function() {
+    return compile(purescript.psc, [paths.src].concat(paths.bowerSrc), {})
+});
+
+gulp.task('make', function() {
+    return compile(purescript.pscMake, [paths.src].concat(paths.bowerSrc), {})
+});
+
+gulp.task('test', function() {
+    return compile(purescript.psc, [paths.src, paths.test].concat(paths.bowerSrc), options.test)
+        .pipe(run('node').exec());
+});
 
 gulp.task('docs-Data.Argonaut', docs('Data.Argonaut'));
 gulp.task('docs-Data.Argonaut.*', docs('Data.Argonaut.*'));
