@@ -90,4 +90,4 @@ gulp.task('watch-make', function() {
     gulp.watch(paths.src, sequence('make', 'docs'));
 });
 
-gulp.task('default', sequence('make', 'docs'));
+gulp.task('default', sequence('make', 'docs', 'test'));

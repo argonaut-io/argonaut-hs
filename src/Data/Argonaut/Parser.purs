@@ -10,4 +10,4 @@ module Data.Argonaut.Parser (jsonParser) where
     \}" :: forall a. Fn3 (String -> a) (Json -> a) String a
 
   jsonParser :: String -> Either String Json
-  jsonParser = runFn3 _jsonParser Left Right
+  jsonParser j = runFn3 _jsonParser Left Right j
