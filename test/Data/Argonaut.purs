@@ -29,8 +29,11 @@ module Test.Data.Argonaut where
   genJObject :: Size -> Gen Json
   genJObject sz = do
     v <- vectorOf sz (genJson $ sz - 1)
-    k <- vectorOf (length v) (arbitrary :: Gen String)
-    return $ fromObject <<< M.fromList $ zipWith Tuple k v
+    k <- vectorOf (length v) (arbitrary :: Gen AlphaNumString)
+    return $  let 
+                f (AlphaNumString s) = s
+                k' = f <$> k
+              in fromObject <<< M.fromList $ zipWith Tuple k' v
 
   genJson :: Size -> Gen Json
   genJson 0 = oneOf genJNull [genJBool, genJNumber, genJString]
@@ -54,6 +57,9 @@ module Test.Data.Argonaut where
     Right json == (decoded >>= (encodeJson >>> pure))
 
   main = do
+    trace "Sample of JSON"
+    showSample (genJson 10)
+
     trace "Testing that any JSON can be encoded and then decoded"
     quickCheck prop_encode_then_decode
 
