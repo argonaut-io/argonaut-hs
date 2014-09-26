@@ -1,0 +1,16 @@
+language: node_js
+node_js:
+  - "0.10"
+env:
+  - PATH=$HOME/bin:$PATH purescript_datadir=$HOME/.local/share/purescript
+before_install:
+  - mkdir -p $HOME/bin
+  - mkdir -p $HOME/.local/share/purescript/prelude
+install:
+  - wget -O $HOME/bin/psc https://github.com/purescript/purescript/releases/download/0.5.6.2/psc
+  - chmod a+x $HOME/bin/psc
+  - wget -O $purescript_datadir/prelude/prelude.purs https://github.com/purescript/purescript/releases/download/0.5.6.2/prelude.purs
+  - "npm install bower gulp -g"
+  - "npm install && bower install"
+script:
+  - "gulp"

@@ -1,5 +1,7 @@
 # PureScript-Argonaut
 
+[![Build Status](https://travis-ci.org/joneshf/purescript-argonaut.svg)](https://travis-ci.org/joneshf/purescript-argonaut)
+
 This is an implementation of [Argonaut][argonaut] for the PureScript language.
 
 While not as feature rich as the Scala version, it still supports encoding and decoding.
