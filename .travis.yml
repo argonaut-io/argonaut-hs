@@ -8,7 +8,9 @@ before_install:
   - mkdir -p $HOME/.local/share/purescript/prelude
 install:
   - wget -O $HOME/bin/psc https://github.com/purescript/purescript/releases/download/0.5.6.2/psc
+  - wget -O $HOME/bin/psc-make https://github.com/purescript/purescript/releases/download/0.5.6.2/psc-make
   - chmod a+x $HOME/bin/psc
+  - chmod a+x $HOME/bin/psc-make
   - wget -O $purescript_datadir/prelude/prelude.purs https://github.com/purescript/purescript/releases/download/0.5.6.2/prelude.purs
   - "npm install bower gulp -g"
   - "npm install && bower install"
