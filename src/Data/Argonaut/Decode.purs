@@ -41,13 +41,13 @@ module Data.Argonaut.Decode
   import Data.Traversable (Traversable, traverse)
   import Data.Tuple (uncurry)
 
-  import qualified Data.Map as M
+  import qualified Data.StrMap as M
 
   class DecodeJson a where
     decodeJson :: Json -> Either String a
 
   instance decodeJsonNull :: DecodeJson Unit where
-    decodeJson = foldJsonNull (Left "Not null.") Right
+    decodeJson = foldJsonNull (Left "Not null.") (const $ Right unit)
 
   instance decodeJsonBoolean :: DecodeJson Boolean where
     decodeJson = foldJsonBoolean (Left "Not a Boolean.") Right
@@ -59,12 +59,12 @@ module Data.Argonaut.Decode
     decodeJson = foldJsonString (Left "Not a String.") Right
 
   instance decodeJsonArray :: DecodeJson [Json] where
-    decodeJson = foldJsonArray (Left "Not a Array.") Right
+    decodeJson = foldJsonArray (Left "Not an Array.") Right
 
   instance decodeJsonJson :: DecodeJson Json where
     decodeJson = Right
 
-  instance decodeMap :: (DecodeJson a) => DecodeJson (M.Map String a) where
+  instance decodeMap :: (DecodeJson a) => DecodeJson (M.StrMap a) where
     decodeJson json = maybe (Left "Couldn't decode.") Right $ do
       obj <- toObject json
       traverse decodeMaybe obj
@@ -96,11 +96,11 @@ module Data.Argonaut.Decode
 
   -- Should move these orphans to purescript-foldable-traversable.
 
-  instance foldableMap :: Foldable (M.Map k) where
+  instance foldableMap :: Foldable M.StrMap where
     foldr f z ms = foldr f z $ M.values ms
     foldl f z ms = foldl f z $ M.values ms
     foldMap f ms = foldMap f $ M.values ms
 
-  instance traversableMap :: (Ord k) => Traversable (M.Map k) where
+  instance traversableMap :: Traversable M.StrMap where
     traverse f ms = foldr (\x acc -> M.union <$> x <*> acc) (pure M.empty) ((\fs -> uncurry M.singleton <$> fs) <$> (traverse f <$> M.toList ms))
     sequence = traverse id

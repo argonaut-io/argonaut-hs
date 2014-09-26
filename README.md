@@ -1,10 +1,10 @@
 # PureScript-Argonaut
 
-__Warning__: This currently requires the branch [508][508] in order to compile.
-
 This is an implementation of [Argonaut][argonaut] for the PureScript language.
 
 While not as feature rich as the Scala version, it still supports encoding and decoding.
+
+A recent change is using native Javascript data types and functionality for parsing and rendering. If you don't use lenses, performance should be extremely good.
 
 ## Installation
 

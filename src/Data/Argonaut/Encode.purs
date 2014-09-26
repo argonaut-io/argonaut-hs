@@ -6,6 +6,7 @@ module Data.Argonaut.Encode
   import Data.Argonaut.Core
     ( Json(..)
     , foldJsonObject
+    , jsonNull
     , fromNull
     , fromBoolean
     , fromNumber
@@ -19,13 +20,13 @@ module Data.Argonaut.Encode
   import Data.Foldable (foldr)
   import Data.Tuple (Tuple(..))
 
-  import qualified Data.Map as M
+  import qualified Data.StrMap as M
 
   class EncodeJson a where
     encodeJson :: a -> Json
 
   instance encodeJsonJNull :: EncodeJson Unit where
-    encodeJson = fromNull
+    encodeJson u = jsonNull
 
   instance encodeJsonJBoolean :: EncodeJson Boolean where
     encodeJson = fromBoolean
@@ -42,7 +43,7 @@ module Data.Argonaut.Encode
   instance encodeJsonArray :: (EncodeJson a) => EncodeJson [a] where
     encodeJson json = fromArray (encodeJson <$> json)
 
-  instance encodeMap :: (EncodeJson a) => EncodeJson (M.Map String a) where
+  instance encodeMap :: (EncodeJson a) => EncodeJson (M.StrMap a) where
     encodeJson json = foldr append jsonEmptyObject (assoc <$> M.toList json)
       where
         append (Tuple k v) =
