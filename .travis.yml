@@ -8,10 +8,16 @@ before_install:
   - mkdir -p $HOME/.local/share/purescript/prelude
 install:
   - wget -O $HOME/bin/psc https://github.com/purescript/purescript/releases/download/0.5.6.2/psc
+  - wget -O $HOME/bin/psci https://github.com/purescript/purescript/releases/download/0.5.6.2/psci
   - wget -O $HOME/bin/psc-make https://github.com/purescript/purescript/releases/download/0.5.6.2/psc-make
-  - chmod a+x $HOME/bin/psc
-  - chmod a+x $HOME/bin/psc-make
+  - wget -O $HOME/bin/docgen https://github.com/purescript/purescript/releases/download/0.5.6.2/docgen
+  - wget -O $HOME/bin/hierarchy https://github.com/purescript/purescript/releases/download/0.5.6.2/hierarchy
   - wget -O $purescript_datadir/prelude/prelude.purs https://github.com/purescript/purescript/releases/download/0.5.6.2/prelude.purs
+  - chmod a+x $HOME/bin/psc
+  - chmod a+x $HOME/bin/psci
+  - chmod a+x $HOME/bin/psc-make
+  - chmod a+x $HOME/bin/docgen
+  - chmod a+x $HOME/bin/hierarchy
   - "npm install bower gulp -g"
   - "npm install && bower install"
 script:
