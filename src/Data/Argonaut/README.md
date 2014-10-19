@@ -176,8 +176,6 @@
 
     instance decodeMap :: (DecodeJson a) => DecodeJson (M.StrMap a)
 
-    instance foldableMap :: Foldable M.StrMap
-
     instance traversableMap :: Traversable M.StrMap
 
 
