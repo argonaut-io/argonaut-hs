@@ -1,6 +1,6 @@
 {
   "name": "purescript-argonaut",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "PureScript version of Argonaut",
   "authors": [
     "Hardy Jones <>",
@@ -8,15 +8,15 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "purescript-either":  "~0.1.3",
-    "purescript-maybe":   "~0.2.1",
-    "purescript-tuples":  "~0.2.1",
-    "purescript-maps":    "~0.0.5",
+    "purescript-either": "~0.1.3",
+    "purescript-maybe": "~0.2.1",
+    "purescript-tuples": "~0.2.1",
+    "purescript-maps": "~0.0.5",
     "purescript-foldable-traversable": "~0.1.3",
     "purescript-strings": "~0.3.0",
     "purescript-globals": "~0.1.5",
     "purescript-control": "~0.2.1",
-    "purescript-lens":    "~0.3.1"
+    "purescript-lens": "~0.3.1"
   },
   "devDependencies": {
     "purescript-quickcheck": "~0.2.1"
