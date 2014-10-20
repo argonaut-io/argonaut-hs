@@ -95,7 +95,6 @@ module Data.Argonaut.Decode
   -- Orphans
 
   -- Should move these orphans to purescript-foldable-traversable.
-
   instance traversableMap :: Traversable M.StrMap where
     traverse f ms = foldr (\x acc -> M.union <$> x <*> acc) (pure M.empty) ((\fs -> uncurry M.singleton <$> fs) <$> (traverse f <$> M.toList ms))
     sequence = traverse id

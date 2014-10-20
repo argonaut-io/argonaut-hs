@@ -7,13 +7,6 @@ module Data.Argonaut.Core where
   import qualified Data.StrMap as M
   import Data.Function
 
-  foreign import data JNull :: *
-
-  instance eqJNull :: Eq JNull where
-    (==) n1 n2 = true
-
-    (/=) n1 n2 = false 
-
   type JBoolean = Boolean
   type JNumber  = Number
   type JString  = String
@@ -22,38 +15,10 @@ module Data.Argonaut.Core where
   type JArray   = [Json]
   type JObject  = M.StrMap Json
 
+  foreign import data JNull :: *
   foreign import data Json :: *
 
-  foreign import _stringify "function _stringify(j){ return JSON.stringify(j); }" :: Json -> String
-
-  instance showJson :: Show Json where
-    show = _stringify
-
-  testType :: forall a. (Eq a) => (forall b. b -> (a -> b) -> Json -> b) -> Json -> (a -> Boolean)
-  testType f j = \v1 -> f false (\v2 -> v1 == v2) j
-
-  instance eqJson :: Eq Json where
-    (==) j1 j2 = foldJson a b c d e f j1 where 
-      a = testType foldJsonNull j2
-      b = testType foldJsonBoolean j2
-      c = testType foldJsonNumber j2
-      d = testType foldJsonString j2
-      e = testType foldJsonArray j2
-      f = testType foldJsonObject j2
-
-    (/=) j j' = not (j == j')
-
   -- Folds
-
-  foreign import _foldJson
-    "function _foldJson(isNull, isBool, isNum, isStr, isArr, isObj, j) {\
-    \   if (j == null) return isNull(null);                             \
-    \   else if (typeof j === 'boolean') return isBool(j);              \
-    \   else if (typeof j === 'number') return isNum(j);                \
-    \   else if (typeof j === 'string') return isStr(j);                \
-    \   else if (Object.prototype.toString.call(j) === '[object Array]') return isArr(j); \
-    \   else return isObj(j);                                           \
-    \}" :: forall z. Fn7 (JNull -> z) (JBoolean -> z) (JNumber -> z) (JString -> z) (JArray -> z) (JObject -> z) Json z
 
   foldJson :: forall a
            .  (JNull    -> a)
@@ -192,3 +157,31 @@ module Data.Argonaut.Core where
   jsonArrayL = id <<< filtered isArray
   jsonObjectL :: TraversalP Json Json
   jsonObjectL = id <<< filtered isObject
+
+  instance eqJNull :: Eq JNull where
+    (==) n1 n2 = true
+
+    (/=) n1 n2 = false 
+
+  instance showJson :: Show Json where
+    show = _stringify
+
+  instance showJsonNull :: Show JNull where 
+    show = const "null"
+
+  instance eqJson :: Eq Json where
+    (==) j1 j2 = _stringify j1 == _stringify j2
+
+    (/=) j j' = not (j == j')
+
+  foreign import _stringify "function _stringify(j){ return JSON.stringify(j); }" :: Json -> String
+
+  foreign import _foldJson
+    "function _foldJson(isNull, isBool, isNum, isStr, isArr, isObj, j) {\
+    \   if (j == null) return isNull(null);                             \
+    \   else if (typeof j === 'boolean') return isBool(j);              \
+    \   else if (typeof j === 'number') return isNum(j);                \
+    \   else if (typeof j === 'string') return isStr(j);                \
+    \   else if (Object.prototype.toString.call(j) === '[object Array]') return isArr(j); \
+    \   else return isObj(j);                                           \
+    \}" :: forall z. Fn7 (JNull -> z) (JBoolean -> z) (JNumber -> z) (JString -> z) (JArray -> z) (JObject -> z) Json z
