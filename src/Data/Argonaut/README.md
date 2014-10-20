@@ -42,6 +42,8 @@
 
     instance showJson :: Show Json
 
+    instance showJsonNull :: Show JNull
+
 
 ### Values
 
@@ -131,8 +133,6 @@
 
     stringL :: PrismP Json JString
 
-    testType :: forall a. (Eq a) => (forall b. b -> (a -> b) -> Json -> b) -> Json -> a -> Boolean
-
     toArray :: Json -> Maybe JArray
 
     toBoolean :: Json -> Maybe JBoolean
@@ -213,6 +213,47 @@
     instance encodeJsonJson :: EncodeJson Json
 
     instance encodeMap :: (EncodeJson a) => EncodeJson (M.StrMap a)
+
+
+## Module Data.Argonaut.JCursor
+
+### Types
+
+    data JCursor where
+      JCursorTop :: JCursor
+      JField :: JCursor -> String -> JCursor
+      JIndex :: JCursor -> Number -> JCursor
+
+    newtype JsonPrim where
+      JsonPrim :: (forall a. (JNull -> a) -> (JBoolean -> a) -> (JNumber -> a) -> (JString -> a) -> a) -> JsonPrim
+
+
+### Type Class Instances
+
+    instance monoidJCursor :: Monoid JCursor
+
+    instance semigroupJCursor :: Semigroup JCursor
+
+    instance showJCursor :: Show JCursor
+
+    instance showJsonPrim :: Show JsonPrim
+
+
+### Values
+
+    cursorGet :: JCursor -> Json -> Maybe Json
+
+    cursorSet :: JCursor -> Json -> Json -> Maybe Json
+
+    downField :: String -> JCursor -> JCursor
+
+    downIndex :: Number -> JCursor -> JCursor
+
+    fromPrims :: [Tuple JCursor JsonPrim] -> Maybe Json
+
+    insideOut :: JCursor -> JCursor
+
+    toPrims :: Json -> [Tuple JCursor JsonPrim]
 
 
 ## Module Data.Argonaut.Parser

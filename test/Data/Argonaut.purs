@@ -1,9 +1,11 @@
 module Test.Data.Argonaut where
 
   import Data.Argonaut
+  import Data.Argonaut.JCursor
   import Data.Argonaut.Core (Json())
   import Data.Either
   import Data.Tuple
+  import Data.Maybe
   import Data.Array
   import Debug.Trace
   import qualified Data.StrMap as M
@@ -30,10 +32,9 @@ module Test.Data.Argonaut where
   genJObject sz = do
     v <- vectorOf sz (genJson $ sz - 1)
     k <- vectorOf (length v) (arbitrary :: Gen AlphaNumString)
-    return $  let 
-                f (AlphaNumString s) = s
-                k' = f <$> k
-              in fromObject <<< M.fromList $ zipWith Tuple k' v
+    return $  let f (AlphaNumString s) = s ++ "x"
+                  k' = f <$> k
+              in  fromObject <<< M.fromList <<< nubBy (\a b -> (fst a) == (fst b)) $ zipWith Tuple k' v
 
   genJson :: Size -> Gen Json
   genJson 0 = oneOf genJNull [genJBool, genJNumber, genJString]
@@ -56,8 +57,11 @@ module Test.Data.Argonaut where
     let decoded = (decodeJson json) :: Either String Json in
     Right json == (decoded >>= (encodeJson >>> pure))
 
+  prop_toPrims_fromPrims :: Json -> Result
+  prop_toPrims_fromPrims j = Just j == fromPrims (toPrims j) <?> "fromPrims.toPrims: " ++ show (toPrims j) ++ "\n\n" ++ show (fromPrims (toPrims j))
+
   main = do
-    trace "Sample of JSON"
+    trace "Showing small sample of JSON"
     showSample (genJson 10)
 
     trace "Testing that any JSON can be encoded and then decoded"
@@ -65,3 +69,6 @@ module Test.Data.Argonaut where
 
     trace "Testing that any JSON can be decoded and then encoded"
     quickCheck prop_decode_then_encode
+
+    trace "Testing that toPrims / fromPrims inverses"
+    quickCheck prop_toPrims_fromPrims
