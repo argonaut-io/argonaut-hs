@@ -230,7 +230,11 @@
 
 ### Type Class Instances
 
+    instance eqJCursor :: Eq JCursor
+
     instance monoidJCursor :: Monoid JCursor
+
+    instance ordJCursor :: Ord JCursor
 
     instance semigroupJCursor :: Semigroup JCursor
 

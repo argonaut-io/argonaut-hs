@@ -20,15 +20,6 @@ module Data.Argonaut.JCursor
   
   data JCursor = JCursorTop | JField JCursor String | JIndex JCursor Number
 
-  instance semigroupJCursor :: Semigroup JCursor where
-    (<>) a JCursorTop = a
-    (<>) JCursorTop b = b
-    (<>) (JField a i) b = JField (a <> b) i
-    (<>) (JIndex a i) b = JIndex (a <> b) i
-
-  instance monoidJCursor :: Monoid JCursor where
-    mempty = JCursorTop
-
   newtype JsonPrim = JsonPrim (forall a. (JNull -> a) -> (JBoolean -> a) -> (JNumber -> a) -> (JString -> a) -> a)
 
   runJsonPrim :: JsonPrim -> (forall a. (JNull -> a) -> (JBoolean -> a) -> (JNumber -> a) -> (JString -> a) -> a)
@@ -121,3 +112,33 @@ module Data.Argonaut.JCursor
 
   instance showJsonPrim :: Show JsonPrim where
     show p = runJsonPrim p show show show show
+
+  instance eqJCursor :: Eq JCursor where
+    (==) JCursorTop JCursorTop = true
+    (==) (JField c1 i1) (JField c2 i2) = i1 == i2 && c1 == c2
+    (==) (JIndex c1 i1) (JIndex c2 i2) = i1 == i2 && c1 == c2
+    (==) _ _ = false
+
+    (/=) a b = not (a == b)
+
+  instance ordJCursor :: Ord JCursor where
+    compare JCursorTop JCursorTop = EQ
+    compare JCursorTop _ = LT
+    compare _ JCursorTop = GT
+    compare (JField _ _) (JIndex _ _) = LT
+    compare (JIndex _ _) (JField _ _) = GT
+    compare (JField c1 i1) (JField c2 i2) = case compare i1 i2 of
+                                              EQ -> compare c1 c2
+                                              x  -> x
+    compare (JIndex c1 i1) (JIndex c2 i2) = case compare i1 i2 of
+                                              EQ -> compare c1 c2
+                                              x  -> x
+
+  instance semigroupJCursor :: Semigroup JCursor where
+    (<>) a JCursorTop = a
+    (<>) JCursorTop b = b
+    (<>) (JField a i) b = JField (a <> b) i
+    (<>) (JIndex a i) b = JIndex (a <> b) i
+
+  instance monoidJCursor :: Monoid JCursor where
+    mempty = JCursorTop
