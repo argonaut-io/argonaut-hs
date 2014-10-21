@@ -1,4 +1,60 @@
-module Data.Argonaut.Core where
+module Data.Argonaut.Core 
+  ( Json(..)
+  , JNull(..)
+  , JBoolean(..)
+  , JNumber(..)
+  , JString(..)
+  , JAssoc(..)
+  , JArray(..)
+  , JObject(..)
+  , foldJson
+  , arrayL
+  , booleanL
+  , foldJsonArray
+  , foldJsonBoolean
+  , foldJsonNull
+  , foldJsonNumber
+  , foldJsonObject
+  , foldJsonString
+  , fromArray
+  , fromBoolean
+  , fromNull
+  , fromNumber
+  , fromObject
+  , fromString
+  , isArray
+  , isBoolean
+  , isJsonType
+  , isNull
+  , isNumber
+  , isObject
+  , isString
+  , jsonArrayL
+  , jsonBooleanL
+  , jsonEmptyArray
+  , jsonEmptyObject
+  , jsonEmptyString
+  , jsonFalse
+  , jsonNull
+  , jsonNullL
+  , jsonNumberL
+  , jsonObjectL
+  , jsonSingletonArray
+  , jsonSingletonObject
+  , jsonStringL
+  , jsonTrue
+  , jsonZero
+  , nullL
+  , numberL
+  , objectL
+  , stringL
+  , toArray
+  , toBoolean
+  , toNull
+  , toNumber
+  , toObject
+  , toString
+  ) where
 
   import Control.Lens (filtered, prism', PrismP(), TraversalP())
 
@@ -10,8 +66,7 @@ module Data.Argonaut.Core where
   type JBoolean = Boolean
   type JNumber  = Number
   type JString  = String
-  type JField   = String
-  type JAssoc   = Tuple JField Json
+  type JAssoc   = Tuple String Json
   type JArray   = [Json]
   type JObject  = M.StrMap Json
 
@@ -125,7 +180,7 @@ module Data.Argonaut.Core where
   jsonEmptyObject = fromObject M.empty
   jsonSingletonArray :: Json -> Json
   jsonSingletonArray j = fromArray [j]
-  jsonSingletonObject :: JField -> Json -> Json
+  jsonSingletonObject :: String -> Json -> Json
   jsonSingletonObject key val = fromObject $ M.singleton key val
 
   -- Prisms
@@ -163,6 +218,9 @@ module Data.Argonaut.Core where
 
     (/=) n1 n2 = false 
 
+  instance ordJNull :: Ord JNull where 
+    compare = const <<< const EQ
+
   instance showJson :: Show Json where
     show = _stringify
 
@@ -173,6 +231,9 @@ module Data.Argonaut.Core where
     (==) j1 j2 = _stringify j1 == _stringify j2
 
     (/=) j j' = not (j == j')
+
+  instance ordJson :: Ord Json where
+    compare a b = runFn5 _compare EQ GT LT a b    
 
   foreign import _stringify "function _stringify(j){ return JSON.stringify(j); }" :: Json -> String
 
@@ -185,3 +246,93 @@ module Data.Argonaut.Core where
     \   else if (Object.prototype.toString.call(j) === '[object Array]') return isArr(j); \
     \   else return isObj(j);                                           \
     \}" :: forall z. Fn7 (JNull -> z) (JBoolean -> z) (JNumber -> z) (JString -> z) (JArray -> z) (JObject -> z) Json z
+
+  -- very fast ordering for Json
+  foreign import _compare
+    """
+    function _compare(EQ, GT, LT, a, b) {
+      function isArray(a) {
+        return Object.prototype.toString.call(a) === '[object Array]';
+      }
+      function keys(o) {
+        var a = [];
+        for (var k in o) {
+          a.push(k);
+        }
+        return a;
+      }
+
+      if (a == null) {
+        if (b == null) return EQ;
+        else return LT;
+      } else if (typeof a === 'boolean') {
+        if (typeof b === 'boolean') {
+          // boolean / boolean 
+          if (a === b) return EQ;
+          else if (a == false) return LT;
+          else return GT;
+        } else if (b == null) return GT;
+        else return LT;
+      } else if (typeof a === 'number') {
+        if (typeof b === 'number') {
+          if (a === b) return EQ;
+          else if (a < b) return LT;
+          else return GT;
+        } else if (b == null) return GT;
+        else if (typeof b === 'boolean') return GT;
+        else return LT;
+      } else if (typeof a === 'string') {
+        if (typeof b === 'string') {
+          if (a === b) return EQ;
+          else if (a < b) return LT;
+          else return GT;
+        } else if (b == null) return GT;
+        else if (typeof b === 'boolean') return GT;
+        else if (typeof b === 'number') return GT;
+        else return LT;
+      } else if (isArray(a)) {
+        if (isArray(b)) {
+          for (var i = 0; i < Math.min(a.length, b.length); i++) {
+            var c = _compare(EQ, GT, LT, a[i], b[i]);
+
+            if (c !== EQ) return c;
+          }
+          if (a.length === b.length) return EQ;
+          else if (a.length < b.length) return LT;
+          else return GT;
+        } else if (b == null) return GT;
+        else if (typeof b === 'boolean') return GT;
+        else if (typeof b === 'number') return GT;
+        else if (typeof b === 'string') return GT;
+        else return LT;
+      }
+      else {
+        if (b == null) return GT;
+        else if (typeof b === 'boolean') return GT;
+        else if (typeof b === 'number') return GT;
+        else if (typeof b === 'string') return GT;
+        else if (isArray(b)) return GT;
+        else {
+          var akeys = keys(a);
+          var bkeys = keys(b);
+
+          var keys = akeys.concat(bkeys).sort();
+
+          for (var i = 0; i < keys.length; i++) {
+            var k = keys[i];
+
+            if (a[k] === undefined) return LT;
+            else if (b[k] === undefined) return GT;
+
+            var c = _compare(EQ, GT, LT, a[k], b[k]);
+
+            if (c !== EQ) return c;
+          }
+
+          if (akeys.length === bkeys.length) return EQ;
+          else if (akeys.length < bkeys.length) return LT;
+          else return GT;
+        }
+      }
+    }
+    """ :: Fn5 Ordering Ordering Ordering Json Json Ordering

@@ -17,11 +17,9 @@
 
     type JArray  = [Json]
 
-    type JAssoc  = Tuple JField Json
+    type JAssoc  = Tuple String Json
 
     type JBoolean  = Boolean
-
-    type JField  = String
 
     data JNull :: *
 
@@ -40,16 +38,16 @@
 
     instance eqJson :: Eq Json
 
+    instance ordJNull :: Ord JNull
+
+    instance ordJson :: Ord Json
+
     instance showJson :: Show Json
 
     instance showJsonNull :: Show JNull
 
 
 ### Values
-
-    _foldJson :: forall z. Fn7 (JNull -> z) (JBoolean -> z) (JNumber -> z) (JString -> z) (JArray -> z) (JObject -> z) Json z
-
-    _stringify :: Json -> String
 
     arrayL :: PrismP Json JArray
 
@@ -117,7 +115,7 @@
 
     jsonSingletonArray :: Json -> Json
 
-    jsonSingletonObject :: JField -> Json -> Json
+    jsonSingletonObject :: String -> Json -> Json
 
     jsonStringL :: TraversalP Json Json
 
@@ -137,8 +135,6 @@
 
     toBoolean :: Json -> Maybe JBoolean
 
-    toJsonType :: forall a b. (Maybe a -> (a -> Maybe a) -> Json -> Maybe a) -> Json -> Maybe a
-
     toNull :: Json -> Maybe JNull
 
     toNumber :: Json -> Maybe JNumber
@@ -146,8 +142,6 @@
     toObject :: Json -> Maybe JObject
 
     toString :: Json -> Maybe JString
-
-    verbJsonType :: forall a b. b -> (a -> b) -> (b -> (a -> b) -> Json -> b) -> Json -> b
 
 
 ## Module Data.Argonaut.Decode
@@ -256,6 +250,8 @@
     fromPrims :: [Tuple JCursor JsonPrim] -> Maybe Json
 
     insideOut :: JCursor -> JCursor
+
+    runJsonPrim :: JsonPrim -> (forall a. (JNull -> a) -> (JBoolean -> a) -> (JNumber -> a) -> (JString -> a) -> a)
 
     toPrims :: Json -> [Tuple JCursor JsonPrim]
 

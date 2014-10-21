@@ -77,6 +77,7 @@ module Data.Argonaut
   import qualified Data.Argonaut.Encode as Encode
   import qualified Data.Argonaut.Parser as Parser
   import qualified Data.Argonaut.Printer as Printer
+  import qualified Data.Argonaut.JCursor as JCursor
 
   -- | Combinators
 
@@ -99,6 +100,18 @@ module Data.Argonaut
   type JArray   = Core.JArray
   type JObject  = Core.JObject
 
+  type JCursor  = JCursor.JCursor
+  type JsonPrim = JCursor.JsonPrim
+
+  -- Cursors
+  cursorGet   = JCursor.cursorGet
+  cursorSet   = JCursor.cursorSet
+  fromPrims   = JCursor.fromPrims
+  downField   = JCursor.downField
+  downIndex   = JCursor.downIndex
+  insideOut   = JCursor.insideOut
+  toPrims     = JCursor.toPrims  
+  runJsonPrim = JCursor.runJsonPrim
 
   -- Folds
   foldJson            = Core.foldJson
