@@ -215,8 +215,8 @@
 
     data JCursor where
       JCursorTop :: JCursor
-      JField :: JCursor -> String -> JCursor
-      JIndex :: JCursor -> Number -> JCursor
+      JField :: String -> JCursor -> JCursor
+      JIndex :: Number -> JCursor -> JCursor
 
     newtype JsonPrim where
       JsonPrim :: (forall a. (JNull -> a) -> (JBoolean -> a) -> (JNumber -> a) -> (JString -> a) -> a) -> JsonPrim
