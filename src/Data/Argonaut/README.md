@@ -251,6 +251,16 @@
 
     insideOut :: JCursor -> JCursor
 
+    primBool :: JBoolean -> JsonPrim
+
+    primNull :: JsonPrim
+
+    primNum :: JNumber -> JsonPrim
+
+    primStr :: JString -> JsonPrim
+
+    primToJson :: JsonPrim -> Json
+
     runJsonPrim :: JsonPrim -> (forall a. (JNull -> a) -> (JBoolean -> a) -> (JNumber -> a) -> (JString -> a) -> a)
 
     toPrims :: Json -> [Tuple JCursor JsonPrim]

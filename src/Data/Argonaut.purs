@@ -111,6 +111,13 @@ module Data.Argonaut
   downIndex   = JCursor.downIndex
   insideOut   = JCursor.insideOut
   toPrims     = JCursor.toPrims  
+
+  -- Prims
+  primNull    = JCursor.primNull
+  primBool    = JCursor.primBool
+  primNum     = JCursor.primNum
+  primStr     = JCursor.primStr
+  primToJson  = JCursor.primToJson
   runJsonPrim = JCursor.runJsonPrim
 
   -- Folds

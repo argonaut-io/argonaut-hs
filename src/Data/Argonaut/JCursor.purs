@@ -7,6 +7,11 @@ module Data.Argonaut.JCursor
   , downField
   , downIndex
   , insideOut
+  , primNull
+  , primBool
+  , primNum
+  , primStr
+  , primToJson
   , runJsonPrim
   , toPrims
   ) where
