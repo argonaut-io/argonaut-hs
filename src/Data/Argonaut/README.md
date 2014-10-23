@@ -170,8 +170,6 @@
 
     instance decodeMap :: (DecodeJson a) => DecodeJson (M.StrMap a)
 
-    instance traversableMap :: Traversable M.StrMap
-
 
 ### Values
 

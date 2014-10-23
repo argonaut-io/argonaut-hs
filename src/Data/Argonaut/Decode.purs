@@ -37,9 +37,7 @@ module Data.Argonaut.Decode
   import Data.Argonaut.Encode (encodeJson, EncodeJson)
   import Data.Either (either, Either(..))
   import Data.Maybe (maybe, Maybe(..))
-  import Data.Foldable (Foldable, foldl, foldMap, foldr)
-  import Data.Traversable (Traversable, traverse)
-  import Data.Tuple (uncurry)
+  import Data.Traversable (traverse)
 
   import qualified Data.StrMap as M
 
@@ -91,10 +89,3 @@ module Data.Argonaut.Decode
 
   -- arrayMembersL :: forall a. (DecodeJson a, EncodeJson a) => IndexedTraversalP JNumber Json a
   -- arrayMembersL = decodeL >>> traversed >>> arrayL
-
-  -- Orphans
-
-  -- Should move these orphans to purescript-foldable-traversable.
-  instance traversableMap :: Traversable M.StrMap where
-    traverse f ms = foldr (\x acc -> M.union <$> x <*> acc) (pure M.empty) ((\fs -> uncurry M.singleton <$> fs) <$> (traverse f <$> M.toList ms))
-    sequence = traverse id
