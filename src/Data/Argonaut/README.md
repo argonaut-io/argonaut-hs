@@ -8,26 +8,26 @@
 
     (?>>=) :: forall a b. Maybe a -> String -> Either String a
 
-    (~>) :: JAssoc -> Json -> Json
+    (~>) :: forall a. (EncodeJson a) => JAssoc -> a -> Json
 
 
 ## Module Data.Argonaut.Core
 
 ### Types
 
-    type JArray  = [Json]
+    type JArray = [Json]
 
-    type JAssoc  = Tuple String Json
+    type JAssoc = Tuple String Json
 
-    type JBoolean  = Boolean
+    type JBoolean = Boolean
 
     data JNull :: *
 
-    type JNumber  = Number
+    type JNumber = Number
 
-    type JObject  = M.StrMap Json
+    type JObject = M.StrMap Json
 
-    type JString  = String
+    type JString = String
 
     data Json :: *
 
@@ -156,11 +156,15 @@
 
     instance decodeArray :: (DecodeJson a) => DecodeJson [a]
 
-    instance decodeJsonArray :: DecodeJson [Json]
-
     instance decodeJsonBoolean :: DecodeJson Boolean
 
+    instance decodeJsonChar :: DecodeJson Char
+
+    instance decodeJsonEither :: (DecodeJson a, DecodeJson b) => DecodeJson (Either a b)
+
     instance decodeJsonJson :: DecodeJson Json
+
+    instance decodeJsonMaybe :: (DecodeJson a) => DecodeJson (Maybe a)
 
     instance decodeJsonNull :: DecodeJson Unit
 
@@ -168,9 +172,11 @@
 
     instance decodeJsonString :: DecodeJson String
 
-    instance decodeMap :: (DecodeJson a) => DecodeJson (M.StrMap a)
+    instance decodeJsonTuple :: (DecodeJson a, DecodeJson b) => DecodeJson (Tuple a b)
 
-    instance traversableMap :: Traversable M.StrMap
+    instance decodeMap :: (Ord a, DecodeJson a, DecodeJson b) => DecodeJson (Map.Map a b)
+
+    instance decodeStrMap :: (DecodeJson a) => DecodeJson (M.StrMap a)
 
 
 ### Values
@@ -196,9 +202,11 @@
 
     instance encodeJsonArray :: (EncodeJson a) => EncodeJson [a]
 
-    instance encodeJsonJBoolean :: EncodeJson Boolean
+    instance encodeJsonChar :: EncodeJson Char
 
-    instance encodeJsonJNull :: EncodeJson Unit
+    instance encodeJsonEither :: (EncodeJson a, EncodeJson b) => EncodeJson (Either a b)
+
+    instance encodeJsonJBoolean :: EncodeJson Boolean
 
     instance encodeJsonJNumber :: EncodeJson Number
 
@@ -206,7 +214,15 @@
 
     instance encodeJsonJson :: EncodeJson Json
 
-    instance encodeMap :: (EncodeJson a) => EncodeJson (M.StrMap a)
+    instance encodeJsonMaybe :: (EncodeJson a) => EncodeJson (Maybe a)
+
+    instance encodeJsonTuple :: (EncodeJson a, EncodeJson b) => EncodeJson (Tuple a b)
+
+    instance encodeJsonUnit :: EncodeJson Unit
+
+    instance encodeMap :: (Ord a, EncodeJson a, EncodeJson b) => EncodeJson (Map.Map a b)
+
+    instance encodeStrMap :: (EncodeJson a) => EncodeJson (M.StrMap a)
 
 
 ## Module Data.Argonaut.JCursor
@@ -223,6 +239,10 @@
 
 
 ### Type Class Instances
+
+    instance decodeJsonJCursor :: DecodeJson JCursor
+
+    instance encodeJsonJCursor :: EncodeJson JCursor
 
     instance eqJCursor :: Eq JCursor
 

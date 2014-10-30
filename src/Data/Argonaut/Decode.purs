@@ -39,12 +39,26 @@ module Data.Argonaut.Decode
   import Data.Maybe (maybe, Maybe(..))
   import Data.Foldable (Foldable, foldl, foldMap, foldr)
   import Data.Traversable (Traversable, traverse)
-  import Data.Tuple (uncurry)
+  import Data.Tuple (Tuple(..), uncurry)
+  import Data.String
+  import Data.Char(Char())
+  import Control.Alt
 
   import qualified Data.StrMap as M
+  import qualified Data.Map as Map
 
   class DecodeJson a where
     decodeJson :: Json -> Either String a
+
+  instance decodeJsonMaybe :: (DecodeJson a) => DecodeJson (Maybe a) where
+    decodeJson j = decodeJson j <|> pure Nothing
+
+  instance decodeJsonTuple :: (DecodeJson a, DecodeJson b) => DecodeJson (Tuple a b) where
+    decodeJson j = decodeJson j >>= f where
+      f (a : (b : [])) = Tuple <$> decodeJson a <*> decodeJson b
+
+  instance decodeJsonEither :: (DecodeJson a, DecodeJson b) => DecodeJson (Either a b) where
+    decodeJson j = (Left <$> decodeJson j) <|> (Right <$> decodeJson j)
 
   instance decodeJsonNull :: DecodeJson Unit where
     decodeJson = foldJsonNull (Left "Not null.") (const $ Right unit)
@@ -58,13 +72,15 @@ module Data.Argonaut.Decode
   instance decodeJsonString :: DecodeJson String where
     decodeJson = foldJsonString (Left "Not a String.") Right
 
-  instance decodeJsonArray :: DecodeJson [Json] where
-    decodeJson = foldJsonArray (Left "Not an Array.") Right
-
   instance decodeJsonJson :: DecodeJson Json where
     decodeJson = Right
 
-  instance decodeMap :: (DecodeJson a) => DecodeJson (M.StrMap a) where
+  instance decodeJsonChar :: DecodeJson Char where
+    decodeJson j = (charAt 0 <$> decodeJson j) >>= go where
+      go Nothing  = Left $ "Expected character but found: " ++ show j
+      go (Just c) = Right c
+
+  instance decodeStrMap :: (DecodeJson a) => DecodeJson (M.StrMap a) where
     decodeJson json = maybe (Left "Couldn't decode.") Right $ do
       obj <- toObject json
       traverse decodeMaybe obj
@@ -73,6 +89,9 @@ module Data.Argonaut.Decode
     decodeJson json = maybe (Left "Couldn't decode.") Right $ do
       obj <- toArray json
       traverse decodeMaybe obj
+
+  instance decodeMap :: (Ord a, DecodeJson a, DecodeJson b) => DecodeJson (Map.Map a b) where
+    decodeJson j = Map.fromList <$> decodeJson j
 
   decodeMaybe :: forall a. (DecodeJson a) => Json -> Maybe a
   decodeMaybe json = decodeJson json # either ((const Nothing) :: forall a. String -> Maybe a) Just
@@ -91,10 +110,3 @@ module Data.Argonaut.Decode
 
   -- arrayMembersL :: forall a. (DecodeJson a, EncodeJson a) => IndexedTraversalP JNumber Json a
   -- arrayMembersL = decodeL >>> traversed >>> arrayL
-
-  -- Orphans
-
-  -- Should move these orphans to purescript-foldable-traversable.
-  instance traversableMap :: Traversable M.StrMap where
-    traverse f ms = foldr (\x acc -> M.union <$> x <*> acc) (pure M.empty) ((\fs -> uncurry M.singleton <$> fs) <$> (traverse f <$> M.toList ms))
-    sequence = traverse id

@@ -228,7 +228,7 @@ module Data.Argonaut.Core
     show = const "null"
 
   instance eqJson :: Eq Json where
-    (==) j1 j2 = _stringify j1 == _stringify j2
+    (==) j1 j2 = (compare j1 j2) == EQ
 
     (/=) j j' = not (j == j')
 

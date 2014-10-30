@@ -17,16 +17,31 @@ module Data.Argonaut.Encode
     , jsonEmptyObject
     , jsonSingletonObject
     )
+  import Data.Char
+  import Data.Maybe
+  import Data.Either
   import Data.Foldable (foldr)
   import Data.Tuple (Tuple(..))
 
   import qualified Data.StrMap as M
+  import qualified Data.Map as Map
 
   class EncodeJson a where
     encodeJson :: a -> Json
 
-  instance encodeJsonJNull :: EncodeJson Unit where
-    encodeJson u = jsonNull
+  instance encodeJsonMaybe :: (EncodeJson a) => EncodeJson (Maybe a) where
+    encodeJson Nothing  = jsonNull
+    encodeJson (Just a) = encodeJson a
+
+  instance encodeJsonTuple :: (EncodeJson a, EncodeJson b) => EncodeJson (Tuple a b) where
+    encodeJson (Tuple a b) = encodeJson [encodeJson a, encodeJson b]
+
+  instance encodeJsonEither :: (EncodeJson a, EncodeJson b) => EncodeJson (Either a b) where
+    encodeJson (Left a) = encodeJson a
+    encodeJson (Right b) = encodeJson b
+
+  instance encodeJsonUnit :: EncodeJson Unit where
+    encodeJson = const jsonNull
 
   instance encodeJsonJBoolean :: EncodeJson Boolean where
     encodeJson = fromBoolean
@@ -40,12 +55,14 @@ module Data.Argonaut.Encode
   instance encodeJsonJson :: EncodeJson Json where
     encodeJson = id
 
+  instance encodeJsonChar :: EncodeJson Char where
+    encodeJson = encodeJson <<< charString
+
   instance encodeJsonArray :: (EncodeJson a) => EncodeJson [a] where
     encodeJson json = fromArray (encodeJson <$> json)
 
-  instance encodeMap :: (EncodeJson a) => EncodeJson (M.StrMap a) where
-    encodeJson json = foldr append jsonEmptyObject (assoc <$> M.toList json)
-      where
-        append (Tuple k v) =
-          foldJsonObject (jsonSingletonObject k v) (M.insert k v >>> fromObject)
-        assoc (Tuple k v) = Tuple k $ encodeJson v
+  instance encodeStrMap :: (EncodeJson a) => EncodeJson (M.StrMap a) where
+    encodeJson m = fromObject (encodeJson <$> m)
+
+  instance encodeMap :: (Ord a, EncodeJson a, EncodeJson b) => EncodeJson (Map.Map a b) where
+    encodeJson = encodeJson <<< Map.toList
