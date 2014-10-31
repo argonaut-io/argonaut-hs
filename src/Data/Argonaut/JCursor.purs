@@ -17,10 +17,15 @@ module Data.Argonaut.JCursor
   ) where
 
   import Data.Argonaut.Core
+  import Data.Argonaut.Combinators
+  import Data.Argonaut.Encode
+  import Data.Argonaut.Decode
   import Data.Maybe
   import Data.Tuple
   import Data.Foldable
   import Data.Monoid
+  import Data.String
+  import Data.Either(Either(..))
   import qualified Data.Array as A
   import qualified Data.StrMap as M
   
@@ -148,3 +153,22 @@ module Data.Argonaut.JCursor
 
   instance monoidJCursor :: Monoid JCursor where
     mempty = JCursorTop
+
+  instance encodeJsonJCursor :: EncodeJson JCursor where
+    encodeJson = encodeJson <<< loop where
+      loop JCursorTop = []
+      loop (JField i c) = [encodeJson i] <> loop c
+      loop (JIndex i c) = [encodeJson i] <> loop c
+
+  fail :: forall a b. (Show a) => a -> Either String b
+  fail x = Left $ "Expected String or Number but found: " ++ show x            
+
+  instance decodeJsonJCursor :: DecodeJson JCursor where
+    decodeJson j = decodeJson j >>= loop
+      where loop :: [Json] -> Either String JCursor
+            loop [] = Right JCursorTop
+            loop (x : xs) = do c <- loop xs
+                               foldJson fail fail (Right <<< (flip JIndex c)) (Right <<< (flip JField c)) fail fail x
+
+
+

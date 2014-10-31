@@ -10,8 +10,8 @@ module Test.Data.Argonaut where
   import Debug.Trace
   import qualified Data.StrMap as M
 
-  import Test.QuickCheck
-  import Test.QuickCheck.LCG
+  import Test.StrongCheck
+  import Test.StrongCheck.Gen
 
   genJNull :: Gen Json
   genJNull = pure jsonNull
@@ -60,6 +60,17 @@ module Test.Data.Argonaut where
   prop_toPrims_fromPrims :: Json -> Result
   prop_toPrims_fromPrims j = Just j == fromPrims (toPrims j) <?> "fromPrims.toPrims: " ++ show (toPrims j) ++ "\n\n" ++ show (fromPrims (toPrims j))
 
+  instance arbJCursor :: Arbitrary JCursor where
+    arbitrary =  do i <- chooseInt 0 2
+                    r <- if i == 0 then pure JCursorTop 
+                         else if i == 1 then JField <$> arbitrary <*> arbitrary
+                         else JIndex <$> arbitrary <*> arbitrary
+                    return r 
+
+  prop_jcursor_serialization :: JCursor -> Result
+  prop_jcursor_serialization c = 
+    (decodeJson (encodeJson c) == Right c) <?> "JCursor: " ++ show c
+
   main = do
     trace "Showing small sample of JSON"
     showSample (genJson 10)
@@ -72,3 +83,6 @@ module Test.Data.Argonaut where
 
     trace "Testing that toPrims / fromPrims inverses"
     quickCheck prop_toPrims_fromPrims
+
+    trace "Testing that JCursor can be encoded / decoded from JSON"
+    quickCheck prop_jcursor_serialization
