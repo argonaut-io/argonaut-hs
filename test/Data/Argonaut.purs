@@ -10,8 +10,8 @@ module Test.Data.Argonaut where
   import Debug.Trace
   import qualified Data.StrMap as M
 
-  import Test.QuickCheck
-  import Test.QuickCheck.LCG
+  import Test.StrongCheck
+  import Test.StrongCheck.Gen
 
   genJNull :: Gen Json
   genJNull = pure jsonNull

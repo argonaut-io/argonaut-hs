@@ -20,6 +20,6 @@
     "purescript-lens":    "~0.3.2"
   },
   "devDependencies": {
-    "purescript-quickcheck": "~0.2.1"
+    "purescript-strongcheck": "~0.3.3"
   }
 }
