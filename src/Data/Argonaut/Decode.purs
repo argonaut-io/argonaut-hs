@@ -43,6 +43,7 @@ module Data.Argonaut.Decode
   import Data.String
   import Data.Char(Char())
   import Control.Alt
+  import Data.Traversable (traverse)
 
   import qualified Data.StrMap as M
   import qualified Data.Map as Map
