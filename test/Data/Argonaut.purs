@@ -86,3 +86,7 @@ module Test.Data.Argonaut where
 
     trace "Testing that JCursor can be encoded / decoded from JSON"
     quickCheck prop_jcursor_serialization
+
+    trace "Testing .? combinator"
+    assert $  let bar = fromString "bar" 
+              in  (M.singleton "foo" bar) .? "foo" == Right bar

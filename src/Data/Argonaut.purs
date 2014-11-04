@@ -3,6 +3,7 @@ module Data.Argonaut
   ( (:=)
   , (~>)
   , (?>>=)
+  , (.?)
   -- Core
   -- Folds
   , foldJson
@@ -82,12 +83,14 @@ module Data.Argonaut
   -- | Combinators
 
   infix  7 :=
+  infix  7 .?
   infixr 6 ~>
   infixl 1 ?>>=
 
   (:=)   = Combinators.(:=)
   (~>)   = Combinators.(~>)
   (?>>=) = Combinators.(?>>=)
+  (.?)   = Combinators.(.?)
 
   -- | Core
 
