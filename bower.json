@@ -1,6 +1,6 @@
 {
   "name": "purescript-argonaut",
-  "version": "0.2.10",
+  "version": "0.2.11",
   "description": "PureScript version of Argonaut",
   "authors": [
     "Hardy Jones <>",
