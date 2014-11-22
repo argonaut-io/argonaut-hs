@@ -17,19 +17,19 @@
 
 ### Types
 
-    type JArray  = [Json]
+    type JArray = [Json]
 
-    type JAssoc  = Tuple String Json
+    type JAssoc = Tuple String Json
 
-    type JBoolean  = Boolean
+    type JBoolean = Boolean
 
     data JNull :: *
 
-    type JNumber  = Number
+    type JNumber = Number
 
-    type JObject  = M.StrMap Json
+    type JObject = M.StrMap Json
 
-    type JString  = String
+    type JString = String
 
     data Json :: *
 
