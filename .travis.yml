@@ -1,24 +1,14 @@
 language: node_js
 node_js:
-  - "0.10"
+  - 0.10
 env:
-  - PATH=$HOME/bin:$PATH purescript_datadir=$HOME/.local/share/purescript
-before_install:
-  - mkdir -p $HOME/bin
-  - mkdir -p $HOME/.local/share/purescript/prelude
+  - PATH=$HOME/purescript:$PATH
 install:
-  - wget -O $HOME/bin/psc https://github.com/purescript/purescript/releases/download/0.5.6.2/psc
-  - wget -O $HOME/bin/psci https://github.com/purescript/purescript/releases/download/0.5.6.2/psci
-  - wget -O $HOME/bin/psc-make https://github.com/purescript/purescript/releases/download/0.5.6.2/psc-make
-  - wget -O $HOME/bin/docgen https://github.com/purescript/purescript/releases/download/0.5.6.2/docgen
-  - wget -O $HOME/bin/hierarchy https://github.com/purescript/purescript/releases/download/0.5.6.2/hierarchy
-  - wget -O $purescript_datadir/prelude/prelude.purs https://github.com/purescript/purescript/releases/download/0.5.6.2/prelude.purs
-  - chmod a+x $HOME/bin/psc
-  - chmod a+x $HOME/bin/psci
-  - chmod a+x $HOME/bin/psc-make
-  - chmod a+x $HOME/bin/docgen
-  - chmod a+x $HOME/bin/hierarchy
-  - "npm install bower gulp -g"
-  - "npm install && bower install"
+  - TAG=$(wget -q -O - https://github.com/purescript/purescript/releases/latest --server-response --max-redirect 0 2>&1 | sed -n -e 's/.*Location:.*tag\///p')
+  - wget -O $HOME/purescript.tar.gz https://github.com/purescript/purescript/releases/download/$TAG/linux64.tar.gz
+  - tar -xvf $HOME/purescript.tar.gz -C $HOME/
+  - chmod a+x $HOME/purescript
+  - npm install bower gulp -g
+  - npm install && bower install
 script:
-  - "gulp"
+  - gulp
