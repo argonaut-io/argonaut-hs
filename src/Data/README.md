@@ -2,7 +2,4 @@
 
 ## Module Data.Argonaut
 
-### Types
-
-
 
