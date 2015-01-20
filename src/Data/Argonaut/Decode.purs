@@ -8,14 +8,10 @@ module Data.Argonaut.Decode
   , objectFieldL
   ) where
 
-  import Control.Lens
-    ( ix
-    , itraversed
-    , prism'
-    , IndexedTraversalP()
-    , PrismP()
-    , TraversalP()
-    )
+  import Optic.Core (PrismP())
+  import Optic.Extended (TraversalP())
+  import Optic.Index (ix)
+  import Optic.Prism (prism')
 
   import Data.Argonaut.Core
     ( Json()

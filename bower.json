@@ -1,6 +1,5 @@
 {
   "name": "purescript-argonaut",
-  "version": "0.2.11",
   "description": "PureScript version of Argonaut",
   "authors": [
     "Hardy Jones <>",
@@ -11,15 +10,17 @@
     "purescript-either": "~0.1.3",
     "purescript-maybe": "~0.2.1",
     "purescript-tuples": "~0.2.1",
-    "purescript-maps": "~0.1.1",
-    "purescript-sets": "~0.1.0",
-    "purescript-foldable-traversable": "~0.1.3",
+    "purescript-maps": "~0.2.0",
+    "purescript-sets": "~0.2.0",
+    "purescript-foldable-traversable": "~0.2.1",
     "purescript-strings": "~0.4.0",
     "purescript-globals": "~0.1.5",
     "purescript-control": "~0.2.1",
-    "purescript-lens": "~0.3.2"
+    "purescript-lens": "~0.5.0",
+    "purescript-optic": "~0.3.0",
+    "purescript-index": "~0.2.0"
   },
   "devDependencies": {
-    "purescript-strongcheck": "~0.5.1"
+    "purescript-strongcheck": "~0.6.0"
   }
 }

@@ -1,4 +1,4 @@
-module Data.Argonaut.Core 
+module Data.Argonaut.Core
   ( Json(..)
   , JNull(..)
   , JBoolean(..)
@@ -56,7 +56,10 @@ module Data.Argonaut.Core
   , toString
   ) where
 
-  import Control.Lens (filtered, prism', PrismP(), TraversalP())
+  import Optic.Core (PrismP())
+  import Optic.Extended (TraversalP())
+  import Optic.Fold (filtered)
+  import Optic.Prism (prism')
 
   import Data.Maybe (Maybe(..))
   import Data.Tuple (Tuple(..))
@@ -87,22 +90,22 @@ module Data.Argonaut.Core
   foldJson a b c d e f json = runFn7 _foldJson a b c d e f json
 
   foldJsonNull :: forall a. a -> (JNull -> a) -> Json -> a
-  foldJsonNull d f j = runFn7 _foldJson f (const d) (const d) (const d) (const d) (const d) j 
+  foldJsonNull d f j = runFn7 _foldJson f (const d) (const d) (const d) (const d) (const d) j
 
   foldJsonBoolean :: forall a. a -> (JBoolean -> a) -> Json -> a
-  foldJsonBoolean d f j = runFn7 _foldJson (const d) f (const d) (const d) (const d) (const d) j 
+  foldJsonBoolean d f j = runFn7 _foldJson (const d) f (const d) (const d) (const d) (const d) j
 
   foldJsonNumber :: forall a. a -> (JNumber -> a) -> Json -> a
-  foldJsonNumber d f j = runFn7 _foldJson (const d) (const d) f (const d) (const d) (const d) j 
+  foldJsonNumber d f j = runFn7 _foldJson (const d) (const d) f (const d) (const d) (const d) j
 
   foldJsonString :: forall a. a -> (JString -> a) -> Json -> a
-  foldJsonString d f j = runFn7 _foldJson (const d) (const d) (const d) f (const d) (const d) j 
+  foldJsonString d f j = runFn7 _foldJson (const d) (const d) (const d) f (const d) (const d) j
 
   foldJsonArray :: forall a. a -> (JArray -> a) -> Json -> a
-  foldJsonArray d f j = runFn7 _foldJson (const d) (const d) (const d) (const d) f (const d) j 
+  foldJsonArray d f j = runFn7 _foldJson (const d) (const d) (const d) (const d) f (const d) j
 
   foldJsonObject :: forall a. a -> (JObject -> a) -> Json -> a
-  foldJsonObject d f j = runFn7 _foldJson (const d) (const d) (const d) (const d) (const d) f j 
+  foldJsonObject d f j = runFn7 _foldJson (const d) (const d) (const d) (const d) (const d) f j
 
   verbJsonType :: forall a b
                .  b
@@ -162,7 +165,7 @@ module Data.Argonaut.Core
   foreign import fromString   "function fromString(s){return s;}"   :: JString -> Json
   foreign import fromArray    "function fromArray(a){return a;}"    :: JArray -> Json
   foreign import fromObject   "function fromObject(o){return o;}"   :: JObject -> Json
-  
+
   -- Default values
 
   jsonTrue :: Json
@@ -171,7 +174,7 @@ module Data.Argonaut.Core
   jsonFalse = fromBoolean false
   jsonZero :: Json
   jsonZero = fromNumber 0
-  foreign import jsonNull "var jsonNull = null;" :: Json 
+  foreign import jsonNull "var jsonNull = null;" :: Json
   jsonEmptyString :: Json
   jsonEmptyString = fromString ""
   jsonEmptyArray :: Json
@@ -216,15 +219,15 @@ module Data.Argonaut.Core
   instance eqJNull :: Eq JNull where
     (==) n1 n2 = true
 
-    (/=) n1 n2 = false 
+    (/=) n1 n2 = false
 
-  instance ordJNull :: Ord JNull where 
+  instance ordJNull :: Ord JNull where
     compare = const <<< const EQ
 
   instance showJson :: Show Json where
     show = _stringify
 
-  instance showJsonNull :: Show JNull where 
+  instance showJsonNull :: Show JNull where
     show = const "null"
 
   instance eqJson :: Eq Json where
@@ -233,7 +236,7 @@ module Data.Argonaut.Core
     (/=) j j' = not (j == j')
 
   instance ordJson :: Ord Json where
-    compare a b = runFn5 _compare EQ GT LT a b    
+    compare a b = runFn5 _compare EQ GT LT a b
 
   foreign import _stringify "function _stringify(j){ return JSON.stringify(j); }" :: Json -> String
 
@@ -267,7 +270,7 @@ module Data.Argonaut.Core
         else return LT;
       } else if (typeof a === 'boolean') {
         if (typeof b === 'boolean') {
-          // boolean / boolean 
+          // boolean / boolean
           if (a === b) return EQ;
           else if (a == false) return LT;
           else return GT;
