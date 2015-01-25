@@ -4,7 +4,7 @@
 
 ### Values
 
-     obj .? "foo"
+     obj .? "foo"
 
     (.?) :: forall a. (DecodeJson a) => JObject -> String -> Either String a
 
@@ -76,7 +76,7 @@
 
     booleanL :: PrismP Json JBoolean
 
-     Folds
+     Folds
 
     foldJson :: forall a. (JNull -> a) -> (JBoolean -> a) -> (JNumber -> a) -> (JString -> a) -> (JArray -> a) -> (JObject -> a) -> Json -> a
 
@@ -104,7 +104,7 @@
 
     fromBoolean :: JBoolean -> Json
 
-     Encoding
+     Encoding
 
     fromNull :: JNull -> Json
 
@@ -123,7 +123,7 @@
 
     isBoolean :: Json -> Boolean
 
-     Tests
+     Tests
 
     isJsonType :: forall a. (Boolean -> (a -> Boolean) -> Json -> Boolean) -> Json -> Boolean
 
@@ -160,7 +160,7 @@
 
     jsonNull :: Json
 
-     Traversals
+     Traversals
 
     jsonNullL :: TraversalP Json Json
 
@@ -179,14 +179,14 @@
 
     jsonStringL :: TraversalP Json Json
 
-     Default values
+     Default values
 
     jsonTrue :: Json
 
 
     jsonZero :: Json
 
-     Prisms
+     Prisms
 
     nullL :: PrismP Json JNull
 
