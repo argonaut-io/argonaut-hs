@@ -21,6 +21,6 @@
     "purescript-index": "~0.2.0"
   },
   "devDependencies": {
-    "purescript-strongcheck": "~0.6.0"
+    "purescript-strongcheck": "~0.7.0"
   }
 }
