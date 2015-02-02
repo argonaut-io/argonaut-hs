@@ -1,6 +1,6 @@
 module Examples.Data.Argonaut.Record where
 
-  import Data.Argonaut ((~>), (:=), (.?), jsonEmptyObject, printJson, toObject)
+  import Data.Argonaut ((~>), (:=), (.?), jsonEmptyObject, printJson)
   import Data.Argonaut.Encode (EncodeJson, encodeJson)
   import Data.Argonaut.Decode (DecodeJson, decodeJson)
   import Data.Maybe (Maybe(..))
