@@ -13,8 +13,8 @@ module Examples.Data.Argonaut.Record where
 
   instance encodeJsonFoo :: EncodeJson Foo where
     encodeJson (Foo f)
-      =  "bar" := encodeJson f.bar
-      ~> "foo" := encodeJson f.foo
+      =  "bar" := f.bar
+      ~> "foo" := f.foo
       ~> jsonEmptyObject
 
   instance showFoo :: Show Foo where
