@@ -1,7 +1,8 @@
 module Examples.Data.Argonaut.Record where
 
-  import Data.Argonaut ((~>), (:=), jsonEmptyObject, printJson)
+  import Data.Argonaut ((~>), (:=), (.?), jsonEmptyObject, printJson, toObject)
   import Data.Argonaut.Encode (EncodeJson, encodeJson)
+  import Data.Argonaut.Decode (DecodeJson, decodeJson)
   import Data.Maybe (Maybe(..))
 
   import Debug.Trace (print)
@@ -10,6 +11,13 @@ module Examples.Data.Argonaut.Record where
     { foo :: Maybe Number
     , bar :: Maybe String
     }
+
+  instance decodeJsonFoo :: DecodeJson Foo where
+    decodeJson json = do
+      obj <- decodeJson json
+      foo <- obj .? "foo"
+      bar <- obj .? "bar"
+      pure $ Foo {foo: foo, bar: bar}
 
   instance encodeJsonFoo :: EncodeJson Foo where
     encodeJson (Foo f)
