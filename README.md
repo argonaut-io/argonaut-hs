@@ -1,6 +1,6 @@
 # PureScript-Argonaut
 
-[![Build Status](https://travis-ci.org/joneshf/purescript-argonaut.svg)](https://travis-ci.org/joneshf/purescript-argonaut)
+[![Build Status](https://travis-ci.org/purescript-contrib/purescript-argonaut.svg)](https://travis-ci.org/purescript-contrib/purescript-argonaut)
 
 This is an implementation of [Argonaut][argonaut] for the PureScript language.
 
