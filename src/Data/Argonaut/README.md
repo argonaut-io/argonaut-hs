@@ -2,441 +2,870 @@
 
 ## Module Data.Argonaut.Combinators
 
-### Values
+#### `(:=)`
 
-     obj .? "foo"
-
-    (.?) :: forall a. (DecodeJson a) => JObject -> String -> Either String a
-
-
-    (:=) :: forall a. (EncodeJson a) => String -> a -> JAssoc
+``` purescript
+(:=) :: forall a. (EncodeJson a) => String -> a -> JAssoc
+```
 
 
-    (?>>=) :: forall a b. Maybe a -> String -> Either String a
+#### `(~>)`
+
+``` purescript
+(~>) :: forall a. (EncodeJson a) => JAssoc -> a -> Json
+```
 
 
-    (~>) :: forall a. (EncodeJson a) => JAssoc -> a -> Json
+#### `(?>>=)`
+
+``` purescript
+(?>>=) :: forall a b. Maybe a -> String -> Either String a
+```
+
+
+#### `(.?)`
+
+``` purescript
+(.?) :: forall a. (DecodeJson a) => JObject -> String -> Either String a
+```
 
 
 ## Module Data.Argonaut.Core
 
-### Types
+#### `JBoolean`
 
+``` purescript
+type JBoolean = Boolean
+```
 
-    type JArray = [Json]
 
+#### `JNumber`
 
-    type JAssoc = Tuple String Json
+``` purescript
+type JNumber = Number
+```
 
 
-    type JBoolean = Boolean
+#### `JString`
 
+``` purescript
+type JString = String
+```
 
-    data JNull :: *
 
+#### `JAssoc`
 
-    type JNumber = Number
+``` purescript
+type JAssoc = Tuple String Json
+```
 
 
-    type JObject = M.StrMap Json
+#### `JArray`
 
+``` purescript
+type JArray = [Json]
+```
 
-    type JString = String
 
+#### `JObject`
 
-    data Json :: *
+``` purescript
+type JObject = M.StrMap Json
+```
 
 
-### Type Class Instances
+#### `JNull`
 
+``` purescript
+data JNull :: *
+```
 
-    instance eqJNull :: Eq JNull
 
+#### `Json`
 
-    instance eqJson :: Eq Json
+``` purescript
+data Json :: *
+```
 
 
-    instance ordJNull :: Ord JNull
+#### `foldJson`
 
+``` purescript
+foldJson :: forall a. (JNull -> a) -> (JBoolean -> a) -> (JNumber -> a) -> (JString -> a) -> (JArray -> a) -> (JObject -> a) -> Json -> a
+```
 
-    instance ordJson :: Ord Json
+#### `foldJsonNull`
 
+``` purescript
+foldJsonNull :: forall a. a -> (JNull -> a) -> Json -> a
+```
 
-    instance showJson :: Show Json
 
+#### `foldJsonBoolean`
 
-    instance showJsonNull :: Show JNull
+``` purescript
+foldJsonBoolean :: forall a. a -> (JBoolean -> a) -> Json -> a
+```
 
 
-### Values
+#### `foldJsonNumber`
 
+``` purescript
+foldJsonNumber :: forall a. a -> (JNumber -> a) -> Json -> a
+```
 
-    arrayL :: PrismP Json JArray
 
+#### `foldJsonString`
 
-    booleanL :: PrismP Json JBoolean
+``` purescript
+foldJsonString :: forall a. a -> (JString -> a) -> Json -> a
+```
 
-     Folds
 
-    foldJson :: forall a. (JNull -> a) -> (JBoolean -> a) -> (JNumber -> a) -> (JString -> a) -> (JArray -> a) -> (JObject -> a) -> Json -> a
+#### `foldJsonArray`
 
+``` purescript
+foldJsonArray :: forall a. a -> (JArray -> a) -> Json -> a
+```
 
-    foldJsonArray :: forall a. a -> (JArray -> a) -> Json -> a
 
+#### `foldJsonObject`
 
-    foldJsonBoolean :: forall a. a -> (JBoolean -> a) -> Json -> a
+``` purescript
+foldJsonObject :: forall a. a -> (JObject -> a) -> Json -> a
+```
 
 
-    foldJsonNull :: forall a. a -> (JNull -> a) -> Json -> a
+#### `isJsonType`
 
+``` purescript
+isJsonType :: forall a. (Boolean -> (a -> Boolean) -> Json -> Boolean) -> Json -> Boolean
+```
 
-    foldJsonNumber :: forall a. a -> (JNumber -> a) -> Json -> a
+#### `isNull`
 
+``` purescript
+isNull :: Json -> Boolean
+```
 
-    foldJsonObject :: forall a. a -> (JObject -> a) -> Json -> a
 
+#### `isBoolean`
 
-    foldJsonString :: forall a. a -> (JString -> a) -> Json -> a
+``` purescript
+isBoolean :: Json -> Boolean
+```
 
 
-    fromArray :: JArray -> Json
+#### `isNumber`
 
+``` purescript
+isNumber :: Json -> Boolean
+```
 
-    fromBoolean :: JBoolean -> Json
 
-     Encoding
+#### `isString`
 
-    fromNull :: JNull -> Json
+``` purescript
+isString :: Json -> Boolean
+```
 
 
-    fromNumber :: JNumber -> Json
+#### `isArray`
 
+``` purescript
+isArray :: Json -> Boolean
+```
 
-    fromObject :: JObject -> Json
 
+#### `isObject`
 
-    fromString :: JString -> Json
+``` purescript
+isObject :: Json -> Boolean
+```
 
 
-    isArray :: Json -> Boolean
+#### `toNull`
 
+``` purescript
+toNull :: Json -> Maybe JNull
+```
 
-    isBoolean :: Json -> Boolean
 
-     Tests
+#### `toBoolean`
 
-    isJsonType :: forall a. (Boolean -> (a -> Boolean) -> Json -> Boolean) -> Json -> Boolean
+``` purescript
+toBoolean :: Json -> Maybe JBoolean
+```
 
 
-    isNull :: Json -> Boolean
+#### `toNumber`
 
+``` purescript
+toNumber :: Json -> Maybe JNumber
+```
 
-    isNumber :: Json -> Boolean
 
+#### `toString`
 
-    isObject :: Json -> Boolean
+``` purescript
+toString :: Json -> Maybe JString
+```
 
 
-    isString :: Json -> Boolean
+#### `toArray`
 
+``` purescript
+toArray :: Json -> Maybe JArray
+```
 
-    jsonArrayL :: TraversalP Json Json
 
+#### `toObject`
 
-    jsonBooleanL :: TraversalP Json Json
+``` purescript
+toObject :: Json -> Maybe JObject
+```
 
 
-    jsonEmptyArray :: Json
+#### `fromNull`
 
+``` purescript
+fromNull :: JNull -> Json
+```
 
-    jsonEmptyObject :: Json
+#### `fromBoolean`
 
+``` purescript
+fromBoolean :: JBoolean -> Json
+```
 
-    jsonEmptyString :: Json
 
+#### `fromNumber`
 
-    jsonFalse :: Json
+``` purescript
+fromNumber :: JNumber -> Json
+```
 
 
-    jsonNull :: Json
+#### `fromString`
 
-     Traversals
+``` purescript
+fromString :: JString -> Json
+```
 
-    jsonNullL :: TraversalP Json Json
 
+#### `fromArray`
 
-    jsonNumberL :: TraversalP Json Json
+``` purescript
+fromArray :: JArray -> Json
+```
 
 
-    jsonObjectL :: TraversalP Json Json
+#### `fromObject`
 
+``` purescript
+fromObject :: JObject -> Json
+```
 
-    jsonSingletonArray :: Json -> Json
 
+#### `jsonTrue`
 
-    jsonSingletonObject :: String -> Json -> Json
+``` purescript
+jsonTrue :: Json
+```
 
+#### `jsonFalse`
 
-    jsonStringL :: TraversalP Json Json
+``` purescript
+jsonFalse :: Json
+```
 
-     Default values
 
-    jsonTrue :: Json
+#### `jsonZero`
 
+``` purescript
+jsonZero :: Json
+```
 
-    jsonZero :: Json
 
-     Prisms
+#### `jsonNull`
 
-    nullL :: PrismP Json JNull
+``` purescript
+jsonNull :: Json
+```
 
 
-    numberL :: PrismP Json JNumber
+#### `jsonEmptyString`
 
+``` purescript
+jsonEmptyString :: Json
+```
 
-    objectL :: PrismP Json JObject
 
+#### `jsonEmptyArray`
 
-    stringL :: PrismP Json JString
+``` purescript
+jsonEmptyArray :: Json
+```
 
 
-    toArray :: Json -> Maybe JArray
+#### `jsonEmptyObject`
 
+``` purescript
+jsonEmptyObject :: Json
+```
 
-    toBoolean :: Json -> Maybe JBoolean
 
+#### `jsonSingletonArray`
 
-    toNull :: Json -> Maybe JNull
+``` purescript
+jsonSingletonArray :: Json -> Json
+```
 
 
-    toNumber :: Json -> Maybe JNumber
+#### `jsonSingletonObject`
 
+``` purescript
+jsonSingletonObject :: String -> Json -> Json
+```
 
-    toObject :: Json -> Maybe JObject
 
+#### `nullL`
 
-    toString :: Json -> Maybe JString
+``` purescript
+nullL :: PrismP Json JNull
+```
+
+#### `booleanL`
+
+``` purescript
+booleanL :: PrismP Json JBoolean
+```
+
+
+#### `numberL`
+
+``` purescript
+numberL :: PrismP Json JNumber
+```
+
+
+#### `stringL`
+
+``` purescript
+stringL :: PrismP Json JString
+```
+
+
+#### `arrayL`
+
+``` purescript
+arrayL :: PrismP Json JArray
+```
+
+
+#### `objectL`
+
+``` purescript
+objectL :: PrismP Json JObject
+```
+
+
+#### `jsonNullL`
+
+``` purescript
+jsonNullL :: TraversalP Json Json
+```
+
+#### `jsonBooleanL`
+
+``` purescript
+jsonBooleanL :: TraversalP Json Json
+```
+
+
+#### `jsonNumberL`
+
+``` purescript
+jsonNumberL :: TraversalP Json Json
+```
+
+
+#### `jsonStringL`
+
+``` purescript
+jsonStringL :: TraversalP Json Json
+```
+
+
+#### `jsonArrayL`
+
+``` purescript
+jsonArrayL :: TraversalP Json Json
+```
+
+
+#### `jsonObjectL`
+
+``` purescript
+jsonObjectL :: TraversalP Json Json
+```
+
+
+#### `eqJNull`
+
+``` purescript
+instance eqJNull :: Eq JNull
+```
+
+
+#### `ordJNull`
+
+``` purescript
+instance ordJNull :: Ord JNull
+```
+
+
+#### `showJson`
+
+``` purescript
+instance showJson :: Show Json
+```
+
+
+#### `showJsonNull`
+
+``` purescript
+instance showJsonNull :: Show JNull
+```
+
+
+#### `eqJson`
+
+``` purescript
+instance eqJson :: Eq Json
+```
+
+
+#### `ordJson`
+
+``` purescript
+instance ordJson :: Ord Json
+```
+
 
 
 ## Module Data.Argonaut.Decode
 
-### Type Classes
+#### `DecodeJson`
+
+``` purescript
+class DecodeJson a where
+  decodeJson :: Json -> Either String a
+```
 
 
-    class DecodeJson a where
+#### `decodeJsonMaybe`
 
-      decodeJson :: Json -> Either String a
-
-
-### Type Class Instances
-
-
-    instance decodeArray :: (DecodeJson a) => DecodeJson [a]
+``` purescript
+instance decodeJsonMaybe :: (DecodeJson a) => DecodeJson (Maybe a)
+```
 
 
-    instance decodeJsonBoolean :: DecodeJson Boolean
+#### `decodeJsonTuple`
+
+``` purescript
+instance decodeJsonTuple :: (DecodeJson a, DecodeJson b) => DecodeJson (Tuple a b)
+```
 
 
-    instance decodeJsonChar :: DecodeJson Char
+#### `decodeJsonEither`
+
+``` purescript
+instance decodeJsonEither :: (DecodeJson a, DecodeJson b) => DecodeJson (Either a b)
+```
 
 
-    instance decodeJsonEither :: (DecodeJson a, DecodeJson b) => DecodeJson (Either a b)
+#### `decodeJsonNull`
+
+``` purescript
+instance decodeJsonNull :: DecodeJson Unit
+```
 
 
-    instance decodeJsonJson :: DecodeJson Json
+#### `decodeJsonBoolean`
+
+``` purescript
+instance decodeJsonBoolean :: DecodeJson Boolean
+```
 
 
-    instance decodeJsonMaybe :: (DecodeJson a) => DecodeJson (Maybe a)
+#### `decodeJsonNumber`
+
+``` purescript
+instance decodeJsonNumber :: DecodeJson Number
+```
 
 
-    instance decodeJsonNull :: DecodeJson Unit
+#### `decodeJsonString`
+
+``` purescript
+instance decodeJsonString :: DecodeJson String
+```
 
 
-    instance decodeJsonNumber :: DecodeJson Number
+#### `decodeJsonJson`
+
+``` purescript
+instance decodeJsonJson :: DecodeJson Json
+```
 
 
-    instance decodeJsonString :: DecodeJson String
+#### `decodeJsonChar`
+
+``` purescript
+instance decodeJsonChar :: DecodeJson Char
+```
 
 
-    instance decodeJsonTuple :: (DecodeJson a, DecodeJson b) => DecodeJson (Tuple a b)
+#### `decodeStrMap`
+
+``` purescript
+instance decodeStrMap :: (DecodeJson a) => DecodeJson (M.StrMap a)
+```
 
 
-    instance decodeMap :: (Ord a, DecodeJson a, DecodeJson b) => DecodeJson (Map.Map a b)
+#### `decodeArray`
+
+``` purescript
+instance decodeArray :: (DecodeJson a) => DecodeJson [a]
+```
 
 
-    instance decodeStrMap :: (DecodeJson a) => DecodeJson (M.StrMap a)
+#### `decodeMap`
+
+``` purescript
+instance decodeMap :: (Ord a, DecodeJson a, DecodeJson b) => DecodeJson (Map.Map a b)
+```
 
 
-### Values
+#### `decodeMaybe`
+
+``` purescript
+decodeMaybe :: forall a. (DecodeJson a) => Json -> Maybe a
+```
 
 
-    arrayIndexL :: forall a. (DecodeJson a, EncodeJson a) => JNumber -> TraversalP Json a
+#### `decodeL`
+
+``` purescript
+decodeL :: forall a. (DecodeJson a, EncodeJson a) => PrismP Json a
+```
 
 
-    decodeL :: forall a. (DecodeJson a, EncodeJson a) => PrismP Json a
+#### `arrayIndexL`
+
+``` purescript
+arrayIndexL :: forall a. (DecodeJson a, EncodeJson a) => JNumber -> TraversalP Json a
+```
 
 
-    decodeMaybe :: forall a. (DecodeJson a) => Json -> Maybe a
+#### `objectFieldL`
 
+``` purescript
+objectFieldL :: forall a. (DecodeJson a, EncodeJson a) => JString -> TraversalP Json a
+```
 
-    objectFieldL :: forall a. (DecodeJson a, EncodeJson a) => JString -> TraversalP Json a
 
 
 ## Module Data.Argonaut.Encode
 
-### Type Classes
+#### `EncodeJson`
+
+``` purescript
+class EncodeJson a where
+  encodeJson :: a -> Json
+```
 
 
-    class EncodeJson a where
+#### `encodeJsonMaybe`
 
-      encodeJson :: a -> Json
-
-
-### Type Class Instances
-
-
-    instance encodeJsonArray :: (EncodeJson a) => EncodeJson [a]
+``` purescript
+instance encodeJsonMaybe :: (EncodeJson a) => EncodeJson (Maybe a)
+```
 
 
-    instance encodeJsonChar :: EncodeJson Char
+#### `encodeJsonTuple`
+
+``` purescript
+instance encodeJsonTuple :: (EncodeJson a, EncodeJson b) => EncodeJson (Tuple a b)
+```
 
 
-    instance encodeJsonEither :: (EncodeJson a, EncodeJson b) => EncodeJson (Either a b)
+#### `encodeJsonEither`
+
+``` purescript
+instance encodeJsonEither :: (EncodeJson a, EncodeJson b) => EncodeJson (Either a b)
+```
 
 
-    instance encodeJsonJBoolean :: EncodeJson Boolean
+#### `encodeJsonUnit`
+
+``` purescript
+instance encodeJsonUnit :: EncodeJson Unit
+```
 
 
-    instance encodeJsonJNumber :: EncodeJson Number
+#### `encodeJsonJBoolean`
+
+``` purescript
+instance encodeJsonJBoolean :: EncodeJson Boolean
+```
 
 
-    instance encodeJsonJString :: EncodeJson String
+#### `encodeJsonJNumber`
+
+``` purescript
+instance encodeJsonJNumber :: EncodeJson Number
+```
 
 
-    instance encodeJsonJson :: EncodeJson Json
+#### `encodeJsonJString`
+
+``` purescript
+instance encodeJsonJString :: EncodeJson String
+```
 
 
-    instance encodeJsonMaybe :: (EncodeJson a) => EncodeJson (Maybe a)
+#### `encodeJsonJson`
+
+``` purescript
+instance encodeJsonJson :: EncodeJson Json
+```
 
 
-    instance encodeJsonTuple :: (EncodeJson a, EncodeJson b) => EncodeJson (Tuple a b)
+#### `encodeJsonChar`
+
+``` purescript
+instance encodeJsonChar :: EncodeJson Char
+```
 
 
-    instance encodeJsonUnit :: EncodeJson Unit
+#### `encodeJsonArray`
+
+``` purescript
+instance encodeJsonArray :: (EncodeJson a) => EncodeJson [a]
+```
 
 
-    instance encodeMap :: (Ord a, EncodeJson a, EncodeJson b) => EncodeJson (Map.Map a b)
+#### `encodeStrMap`
+
+``` purescript
+instance encodeStrMap :: (EncodeJson a) => EncodeJson (M.StrMap a)
+```
 
 
-    instance encodeStrMap :: (EncodeJson a) => EncodeJson (M.StrMap a)
+#### `encodeMap`
+
+``` purescript
+instance encodeMap :: (Ord a, EncodeJson a, EncodeJson b) => EncodeJson (Map.Map a b)
+```
+
 
 
 ## Module Data.Argonaut.JCursor
 
-### Types
+#### `JCursor`
+
+``` purescript
+data JCursor
+  = JCursorTop 
+  | JField String JCursor
+  | JIndex Number JCursor
+```
 
 
-    data JCursor where
-      JCursorTop :: JCursor
-      JField :: String -> JCursor -> JCursor
-      JIndex :: Number -> JCursor -> JCursor
+#### `JsonPrim`
+
+``` purescript
+newtype JsonPrim
+  = JsonPrim (forall a. (JNull -> a) -> (JBoolean -> a) -> (JNumber -> a) -> (JString -> a) -> a)
+```
 
 
-    newtype JsonPrim where
-      JsonPrim :: (forall a. (JNull -> a) -> (JBoolean -> a) -> (JNumber -> a) -> (JString -> a) -> a) -> JsonPrim
+#### `runJsonPrim`
+
+``` purescript
+runJsonPrim :: JsonPrim -> (forall a. (JNull -> a) -> (JBoolean -> a) -> (JNumber -> a) -> (JString -> a) -> a)
+```
 
 
-### Type Class Instances
+#### `primNull`
+
+``` purescript
+primNull :: JsonPrim
+```
 
 
-    instance decodeJsonJCursor :: DecodeJson JCursor
+#### `primBool`
+
+``` purescript
+primBool :: JBoolean -> JsonPrim
+```
 
 
-    instance encodeJsonJCursor :: EncodeJson JCursor
+#### `primNum`
+
+``` purescript
+primNum :: JNumber -> JsonPrim
+```
 
 
-    instance eqJCursor :: Eq JCursor
+#### `primStr`
+
+``` purescript
+primStr :: JString -> JsonPrim
+```
 
 
-    instance monoidJCursor :: Monoid JCursor
+#### `primToJson`
+
+``` purescript
+primToJson :: JsonPrim -> Json
+```
 
 
-    instance ordJCursor :: Ord JCursor
+#### `insideOut`
+
+``` purescript
+insideOut :: JCursor -> JCursor
+```
 
 
-    instance semigroupJCursor :: Semigroup JCursor
+#### `downField`
+
+``` purescript
+downField :: String -> JCursor -> JCursor
+```
 
 
-    instance showJCursor :: Show JCursor
+#### `downIndex`
+
+``` purescript
+downIndex :: Number -> JCursor -> JCursor
+```
 
 
-    instance showJsonPrim :: Show JsonPrim
+#### `cursorGet`
+
+``` purescript
+cursorGet :: JCursor -> Json -> Maybe Json
+```
 
 
-### Values
+#### `cursorSet`
+
+``` purescript
+cursorSet :: JCursor -> Json -> Json -> Maybe Json
+```
 
 
-    cursorGet :: JCursor -> Json -> Maybe Json
+#### `toPrims`
+
+``` purescript
+toPrims :: Json -> [Tuple JCursor JsonPrim]
+```
 
 
-    cursorSet :: JCursor -> Json -> Json -> Maybe Json
+#### `fromPrims`
+
+``` purescript
+fromPrims :: [Tuple JCursor JsonPrim] -> Maybe Json
+```
 
 
-    downField :: String -> JCursor -> JCursor
+#### `showJCursor`
+
+``` purescript
+instance showJCursor :: Show JCursor
+```
 
 
-    downIndex :: Number -> JCursor -> JCursor
+#### `showJsonPrim`
+
+``` purescript
+instance showJsonPrim :: Show JsonPrim
+```
 
 
-    fromPrims :: [Tuple JCursor JsonPrim] -> Maybe Json
+#### `eqJCursor`
+
+``` purescript
+instance eqJCursor :: Eq JCursor
+```
 
 
-    insideOut :: JCursor -> JCursor
+#### `ordJCursor`
+
+``` purescript
+instance ordJCursor :: Ord JCursor
+```
 
 
-    primBool :: JBoolean -> JsonPrim
+#### `semigroupJCursor`
+
+``` purescript
+instance semigroupJCursor :: Semigroup JCursor
+```
 
 
-    primNull :: JsonPrim
+#### `monoidJCursor`
+
+``` purescript
+instance monoidJCursor :: Monoid JCursor
+```
 
 
-    primNum :: JNumber -> JsonPrim
+#### `encodeJsonJCursor`
+
+``` purescript
+instance encodeJsonJCursor :: EncodeJson JCursor
+```
 
 
-    primStr :: JString -> JsonPrim
+#### `decodeJsonJCursor`
 
+``` purescript
+instance decodeJsonJCursor :: DecodeJson JCursor
+```
 
-    primToJson :: JsonPrim -> Json
-
-
-    runJsonPrim :: JsonPrim -> (forall a. (JNull -> a) -> (JBoolean -> a) -> (JNumber -> a) -> (JString -> a) -> a)
-
-
-    toPrims :: Json -> [Tuple JCursor JsonPrim]
 
 
 ## Module Data.Argonaut.Parser
 
-### Values
+#### `jsonParser`
 
+``` purescript
+jsonParser :: String -> Either String Json
+```
 
-    jsonParser :: String -> Either String Json
 
 
 ## Module Data.Argonaut.Printer
 
-### Type Classes
+#### `Printer`
+
+``` purescript
+class Printer a where
+  printJson :: Json -> a
+```
 
 
-    class Printer a where
+#### `printerString`
 
-      printJson :: Json -> a
+``` purescript
+instance printerString :: Printer String
+```
 
-
-### Type Class Instances
-
-
-    instance printerString :: Printer String
 
 
 
