@@ -34,7 +34,8 @@ library
                                     template-haskell >= 2.8.0.0,
                                     bytestring >= 0.10.4.0,
                                     hashable >= 1.2.1.0,
-                                    scientific >= 0.2.0.2
+                                    scientific >= 0.2.0.2,
+                                    semigroupoids >= 4.3
     ghc-options:                    -rtsopts
                                     -Wall
                                     -O2
