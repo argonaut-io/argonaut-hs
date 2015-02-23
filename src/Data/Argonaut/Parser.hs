@@ -33,6 +33,9 @@ import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString.Builder as BSB
 import Data.Argonaut.Core
 import Data.Argonaut.Printer
+import Data.Functor.Apply (Apply(..))
+import Data.Functor.Bind (Bind(..))
+import Control.Applicative (Applicative(..), (*>), (<$>), (<*), liftA2, pure)
 import Control.Lens
 import qualified Data.Vector as V
 import qualified Data.HashMap.Strict as M
@@ -43,7 +46,6 @@ import qualified Data.Attoparsec.ByteString as AB
 import qualified Data.Attoparsec as A
 import qualified Data.Attoparsec.Lazy as L
 import qualified Data.Attoparsec.Zepto as Z
-import Control.Applicative ((*>), (<$>), (<*), liftA2, pure)
 import qualified Data.Attoparsec.Char8 as AC
 
 #define BACKSLASH 92
@@ -73,6 +75,18 @@ data ParseResult a = ParseFailure !String | ParseSuccess !a deriving (Eq, Show)
 instance Functor ParseResult where
   fmap _ (ParseFailure x)  = ParseFailure x
   fmap f (ParseSuccess y)  = ParseSuccess (f y)
+
+instance Apply ParseResult where
+  (<.>) = (<*>)
+
+instance Applicative ParseResult where
+  pure = ParseSuccess
+  ParseFailure l <*> _              = ParseFailure l
+  _              <*> ParseFailure l = ParseFailure l
+  ParseSuccess f <*> ParseSuccess r = ParseSuccess (f r)
+
+instance Bind ParseResult where
+  (>>-) = (>>=)
 
 instance Monad ParseResult where
   return = ParseSuccess
