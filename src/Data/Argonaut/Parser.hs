@@ -39,12 +39,11 @@ import qualified Data.HashMap.Strict as M
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import Data.Argonaut.Templates()
-import qualified Data.Attoparsec.ByteString as AB
-import qualified Data.Attoparsec as A
-import qualified Data.Attoparsec.Lazy as L
+import qualified Data.Attoparsec.ByteString as A
+import qualified Data.Attoparsec.ByteString.Lazy as L
 import qualified Data.Attoparsec.Zepto as Z
 import Control.Applicative ((*>), (<$>), (<*), liftA2, pure)
-import qualified Data.Attoparsec.Char8 as AC
+import qualified Data.Attoparsec.ByteString.Char8 as AC
 
 #define BACKSLASH 92
 #define CLOSE_CURLY 125
@@ -100,7 +99,7 @@ parseText :: T.Text -> ParseResult Json
 parseText = parseByteString . TE.encodeUtf8
 
 parseByteString :: B.ByteString -> ParseResult Json
-parseByteString bytestring = case AB.parseOnly jsonValidSuffixParser bytestring of
+parseByteString bytestring = case A.parseOnly jsonValidSuffixParser bytestring of
   Left failMessage      -> ParseFailure failMessage
   Right result          -> ParseSuccess result
 
