@@ -16,11 +16,11 @@
     "purescript-strings": "~0.4.0",
     "purescript-globals": "~0.1.5",
     "purescript-control": "~0.2.1",
-    "purescript-lens": "~0.6.0",
-    "purescript-optic": "~0.4.0",
+    "purescript-lens": "~0.7.0",
+    "purescript-optic": "~0.5.0",
     "purescript-index": "~0.3.0"
   },
   "devDependencies": {
-    "purescript-strongcheck": "~0.8.0"
+    "purescript-strongcheck": "~0.9.0"
   }
 }
