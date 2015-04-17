@@ -48,7 +48,7 @@ module Data.Argonaut.Decode
     decodeJson :: Json -> Either String a
 
   instance decodeJsonMaybe :: (DecodeJson a) => DecodeJson (Maybe a) where
-    decodeJson j = decodeJson j <|> pure Nothing
+    decodeJson j = (Just <$> decodeJson j) <|> pure Nothing
 
   instance decodeJsonTuple :: (DecodeJson a, DecodeJson b) => DecodeJson (Tuple a b) where
     decodeJson j = decodeJson j >>= f where
