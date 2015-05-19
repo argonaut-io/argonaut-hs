@@ -20,6 +20,7 @@ module Data.Argonaut.Encode
   import Data.Char
   import Data.Maybe
   import Data.Either
+  import Data.Int (Int(), toNumber)
   import Data.Foldable (foldr)
   import Data.Tuple (Tuple(..))
 
@@ -48,6 +49,9 @@ module Data.Argonaut.Encode
 
   instance encodeJsonJNumber :: EncodeJson Number where
     encodeJson = fromNumber
+
+  instance encodeJsonInt :: EncodeJson Int where
+    encodeJson = fromNumber <<< toNumber
 
   instance encodeJsonJString :: EncodeJson String where
     encodeJson = fromString

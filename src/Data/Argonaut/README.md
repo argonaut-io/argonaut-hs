@@ -506,6 +506,13 @@ instance decodeJsonNumber :: DecodeJson Number
 ```
 
 
+#### `decodeJsonInt`
+
+``` purescript
+instance decodeJsonInt :: DecodeJson Int
+```
+
+
 #### `decodeJsonString`
 
 ``` purescript
@@ -626,6 +633,13 @@ instance encodeJsonJBoolean :: EncodeJson Boolean
 
 ``` purescript
 instance encodeJsonJNumber :: EncodeJson Number
+```
+
+
+#### `encodeJsonInt`
+
+``` purescript
+instance encodeJsonInt :: EncodeJson Int
 ```
 
 
