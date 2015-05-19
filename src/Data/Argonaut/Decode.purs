@@ -32,6 +32,7 @@ module Data.Argonaut.Decode
     )
   import Data.Argonaut.Encode (encodeJson, EncodeJson)
   import Data.Either (either, Either(..))
+  import Data.Int (Int(), fromNumber)
   import Data.Maybe (maybe, Maybe(..))
   import Data.Foldable (Foldable, foldl, foldMap, foldr)
   import Data.Traversable (Traversable, traverse)
@@ -65,6 +66,9 @@ module Data.Argonaut.Decode
 
   instance decodeJsonNumber :: DecodeJson Number where
     decodeJson = foldJsonNumber (Left "Not a Number.") Right
+
+  instance decodeJsonInt :: DecodeJson Int where
+    decodeJson = foldJsonNumber (Left "Not a Number.") (Right <<< fromNumber)
 
   instance decodeJsonString :: DecodeJson String where
     decodeJson = foldJsonString (Left "Not a String.") Right
