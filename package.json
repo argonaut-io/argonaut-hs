@@ -3,10 +3,11 @@
   "version": "0.3.0",
   "description": "PureScript version of Argonaut",
   "license": "MIT",
-  "devDependencies": {
-    "gulp": "^3.8.6",
-    "gulp-purescript": "^0.1.2",
-    "gulp-run": "^1.6.4",
-    "run-sequence": "^0.3.6"
+  "devDependencies": {},
+  "dependencies": {
+    "gulp": "^3.9.0",
+    "gulp-purescript": "^0.5.0",
+    "gulp-run": "^1.6.8",
+    "run-sequence": "^1.1.1"
   }
 }

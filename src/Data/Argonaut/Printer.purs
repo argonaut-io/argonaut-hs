@@ -3,11 +3,12 @@ module Data.Argonaut.Printer
   , printJson
   ) where
 
-  import Data.Argonaut.Core
-  import Data.Function
+import Prelude
+import Data.Argonaut.Core
+import Data.Function
 
-  class Printer a where
-    printJson :: Json -> a
+class Printer a where
+  printJson :: Json -> a
 
-  instance printerString :: Printer String where
-    printJson = show
+instance printerString :: Printer String where
+  printJson = show

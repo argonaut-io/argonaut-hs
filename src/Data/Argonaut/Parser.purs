@@ -1,13 +1,11 @@
 module Data.Argonaut.Parser (jsonParser) where
-  import Data.Argonaut.Core
 
-  import Data.Function
-  import Data.Either
+import Data.Argonaut.Core
 
-  foreign import _jsonParser 
-    "function _jsonParser(fail, succ, s) {\
-    \   try { return succ(JSON.parse(s)); } catch (e) { return fail(e.message); }\
-    \}" :: forall a. Fn3 (String -> a) (Json -> a) String a
+import Data.Function (Fn3(), runFn3)
+import Data.Either (Either(..))
 
-  jsonParser :: String -> Either String Json
-  jsonParser j = runFn3 _jsonParser Left Right j
+foreign import _jsonParser :: forall a. Fn3 (String -> a) (Json -> a) String a
+
+jsonParser :: String -> Either String Json
+jsonParser j = runFn3 _jsonParser Left Right j

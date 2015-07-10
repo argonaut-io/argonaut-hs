@@ -7,21 +7,29 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "purescript-either": "~0.1.3",
-    "purescript-maybe": "~0.2.1",
-    "purescript-tuples": "~0.3.0",
-    "purescript-maps": "~0.3.0",
-    "purescript-sets": "~0.3.0",
-    "purescript-foldable-traversable": "~0.3.0",
-    "purescript-strings": "~0.4.0",
-    "purescript-globals": "~0.1.5",
-    "purescript-control": "~0.2.1",
-    "purescript-lens": "~0.7.0",
-    "purescript-optic": "~0.5.0",
-    "purescript-index": "~0.3.0",
-    "purescript-integers": "~0.1.0"
+    "purescript-either": "^0.2.0",
+    "purescript-tuples": "^0.4.0",
+    "purescript-maps": "^0.4.0",
+    "purescript-sets": "^0.4.0",
+    "purescript-foldable-traversable": "^0.4.0",
+    "purescript-strings": "^0.5.2",
+    "purescript-arrays": "^0.4.0",
+    "purescript-lists": "^0.7.0",
+    "purescript-prelude": "^0.1.0",
+    "purescript-globals": "^0.2.0",
+    "purescript-control": "^0.3.0",
+    "purescript-lens": "^0.8.0",
+    "purescript-integers": "^0.2.0",
+    "purescript-functions": "^0.1.0",
+    "purescript-optics": "https://github.com/paf31/purescript-optic.git#0.7",
+    "purescript-index": "https://github.com/paf31/purescript-index.git#0.7",
+    "purescript-strongcheck": "^0.10.0",
+    "purescript-unfoldable": "^0.4.0"
   },
   "devDependencies": {
-    "purescript-strongcheck": "~0.9.0"
+    "purescript-console": "^0.1.0"
+  },
+  "resolutions": {
+    "purescript-lens": "^0.8.0"
   }
 }

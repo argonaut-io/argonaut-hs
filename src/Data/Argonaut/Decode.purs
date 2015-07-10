@@ -8,103 +8,111 @@ module Data.Argonaut.Decode
   , objectFieldL
   ) where
 
-  import Optic.Core (PrismP())
-  import Optic.Extended (TraversalP())
-  import Optic.Index (ix)
-  import Optic.Prism (prism')
+import Prelude 
 
-  import Data.Argonaut.Core
-    ( Json()
-    , JNumber()
-    , JString()
-    , arrayL
-    , foldJsonNull
-    , foldJsonBoolean
-    , foldJsonNumber
-    , foldJsonString
-    , foldJsonArray
-    , foldJsonObject
-    , objectL
-    , toArray
-    , toNumber
-    , toObject
-    , toString
-    )
-  import Data.Argonaut.Encode (encodeJson, EncodeJson)
-  import Data.Either (either, Either(..))
-  import Data.Int (Int(), fromNumber)
-  import Data.Maybe (maybe, Maybe(..))
-  import Data.Foldable (Foldable, foldl, foldMap, foldr)
-  import Data.Traversable (Traversable, traverse)
-  import Data.Tuple (Tuple(..), uncurry)
-  import Data.String
-  import Data.Char(Char())
-  import Control.Alt
-  import Data.Traversable (traverse)
+import Optic.Types (PrismP())
+import Optic.Extended (TraversalP())
+import Optic.Index (ix)
+import Optic.Prism (prism')
 
-  import qualified Data.StrMap as M
-  import qualified Data.Map as Map
+import Data.Argonaut.Core
+  ( Json()
+  , JNumber()
+  , JString()
+  , arrayL
+  , foldJsonNull
+  , foldJsonBoolean
+  , foldJsonNumber
+  , foldJsonString
+  , foldJsonArray
+  , foldJsonObject
+  , objectL
+  , toArray
+  , toNumber
+  , toObject
+  , toString
+  )
+import Data.Argonaut.Encode (encodeJson, EncodeJson)
+import Data.Either (either, Either(..))
+import Data.Int (fromNumber)
+import Data.Maybe (maybe, Maybe(..))
+import Data.Foldable (Foldable, foldl, foldMap, foldr)
+import Data.Traversable (Traversable, traverse)
+import Data.Tuple (Tuple(..), uncurry)
+import Data.String
+import Data.List (List(..), toList)
+import Control.Alt
+import Data.Traversable (traverse)
 
-  class DecodeJson a where
-    decodeJson :: Json -> Either String a
+import qualified Data.StrMap as M
+import qualified Data.Map as Map
 
-  instance decodeJsonMaybe :: (DecodeJson a) => DecodeJson (Maybe a) where
-    decodeJson j = (Just <$> decodeJson j) <|> pure Nothing
+class DecodeJson a where
+  decodeJson :: Json -> Either String a
 
-  instance decodeJsonTuple :: (DecodeJson a, DecodeJson b) => DecodeJson (Tuple a b) where
-    decodeJson j = decodeJson j >>= f where
-      f (a : (b : [])) = Tuple <$> decodeJson a <*> decodeJson b
+instance decodeJsonMaybe :: (DecodeJson a) => DecodeJson (Maybe a) where
+  decodeJson j = (Just <$> decodeJson j) <|> pure Nothing
 
-  instance decodeJsonEither :: (DecodeJson a, DecodeJson b) => DecodeJson (Either a b) where
-    decodeJson j = (Left <$> decodeJson j) <|> (Right <$> decodeJson j)
+instance decodeJsonTuple :: (DecodeJson a, DecodeJson b) => DecodeJson (Tuple a b) where
+  decodeJson j = decodeJson j >>= f where
+    f (Cons a (Cons b Nil)) = Tuple <$> decodeJson a <*> decodeJson b
 
-  instance decodeJsonNull :: DecodeJson Unit where
-    decodeJson = foldJsonNull (Left "Not null.") (const $ Right unit)
+instance decodeJsonEither :: (DecodeJson a, DecodeJson b) => DecodeJson (Either a b) where
+  decodeJson j = (Left <$> decodeJson j) <|> (Right <$> decodeJson j)
 
-  instance decodeJsonBoolean :: DecodeJson Boolean where
-    decodeJson = foldJsonBoolean (Left "Not a Boolean.") Right
+instance decodeJsonNull :: DecodeJson Unit where
+  decodeJson = foldJsonNull (Left "Not null.") (const $ Right unit)
 
-  instance decodeJsonNumber :: DecodeJson Number where
-    decodeJson = foldJsonNumber (Left "Not a Number.") Right
+instance decodeJsonBoolean :: DecodeJson Boolean where
+  decodeJson = foldJsonBoolean (Left "Not a Boolean.") Right
 
-  instance decodeJsonInt :: DecodeJson Int where
-    decodeJson = foldJsonNumber (Left "Not a Number.") (Right <<< fromNumber)
+instance decodeJsonNumber :: DecodeJson Number where
+  decodeJson = foldJsonNumber (Left "Not a Number.") Right
 
-  instance decodeJsonString :: DecodeJson String where
-    decodeJson = foldJsonString (Left "Not a String.") Right
+instance decodeJsonInt :: DecodeJson Int where
+  decodeJson num = foldJsonNumber (Left "Not a Number.") go num
+    where go num = maybe (Left "Not an Int") Right $ fromNumber num 
 
-  instance decodeJsonJson :: DecodeJson Json where
-    decodeJson = Right
+instance decodeJsonString :: DecodeJson String where
+  decodeJson = foldJsonString (Left "Not a String.") Right
 
-  instance decodeJsonChar :: DecodeJson Char where
-    decodeJson j = (charAt 0 <$> decodeJson j) >>= go where
-      go Nothing  = Left $ "Expected character but found: " ++ show j
-      go (Just c) = Right c
+instance decodeJsonJson :: DecodeJson Json where
+  decodeJson = Right
 
-  instance decodeStrMap :: (DecodeJson a) => DecodeJson (M.StrMap a) where
-    decodeJson json = maybe (Left "Couldn't decode.") Right $ do
-      obj <- toObject json
-      traverse decodeMaybe obj
+instance decodeJsonChar :: DecodeJson Char where
+  decodeJson j = (charAt 0 <$> decodeJson j) >>= go where
+    go Nothing  = Left $ "Expected character but found: " ++ show j
+    go (Just c) = Right c
 
-  instance decodeArray :: (DecodeJson a) => DecodeJson [a] where
-    decodeJson json = maybe (Left "Couldn't decode.") Right $ do
-      obj <- toArray json
-      traverse decodeMaybe obj
+instance decodeStrMap :: (DecodeJson a) => DecodeJson (M.StrMap a) where
+  decodeJson json = maybe (Left "Couldn't decode.") Right $ do
+    obj <- toObject json
+    traverse decodeMaybe obj
 
-  instance decodeMap :: (Ord a, DecodeJson a, DecodeJson b) => DecodeJson (Map.Map a b) where
-    decodeJson j = Map.fromList <$> decodeJson j
+instance decodeArray :: (DecodeJson a) => DecodeJson (Array a) where
+  decodeJson json = maybe (Left "Couldn't decode.") Right $ do
+    obj <- toArray json
+    traverse decodeMaybe obj
 
-  decodeMaybe :: forall a. (DecodeJson a) => Json -> Maybe a
-  decodeMaybe json = decodeJson json # either ((const Nothing) :: forall a. String -> Maybe a) Just
+instance decodeList :: (DecodeJson a) => DecodeJson (List a) where
+  decodeJson json = maybe (Left "Couldn't decode.") Right $ do
+    lst <- toList <$> toArray json
+    traverse decodeMaybe lst
 
-  decodeL :: forall a. (DecodeJson a, EncodeJson a) => PrismP Json a
-  decodeL = prism' encodeJson decodeMaybe
+instance decodeMap :: (Ord a, DecodeJson a, DecodeJson b) => DecodeJson (Map.Map a b) where
+  decodeJson j = Map.fromList <$> decodeJson j
 
-  arrayIndexL :: forall a. (DecodeJson a, EncodeJson a) => JNumber -> TraversalP Json a
-  arrayIndexL i = decodeL >>> ix i >>> arrayL
+decodeMaybe :: forall a. (DecodeJson a) => Json -> Maybe a
+decodeMaybe json = decodeJson json # either ((const Nothing) :: forall a. String -> Maybe a) Just
 
-  objectFieldL :: forall a. (DecodeJson a, EncodeJson a) => JString -> TraversalP Json a
-  objectFieldL key = decodeL >>> ix key >>> objectL
+decodeL :: forall a. (DecodeJson a, EncodeJson a) => PrismP Json a
+decodeL = prism' encodeJson decodeMaybe
+
+arrayIndexL :: forall a. (DecodeJson a, EncodeJson a) => Int -> TraversalP Json a
+arrayIndexL i = decodeL >>> ix i >>> arrayL
+
+objectFieldL :: forall a. (DecodeJson a, EncodeJson a) => JString -> TraversalP Json a
+objectFieldL key = decodeL >>> ix key >>> objectL
 
   -- objectMembersL :: forall a. (DecodeJson a, EncodeJson a) => IndexedTraversalP JString Json a
   -- objectMembersL = decodeL >>> itraversed >>> objectL
