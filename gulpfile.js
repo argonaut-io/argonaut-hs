@@ -42,7 +42,9 @@ gulp.task('docs', function() {
             "Data.Argonaut.Encode": "docs/Data/Argonaut/Encode.md",
             "Data.Argonaut.JCursor": "docs/Data/Argonaut/JCursor.md",
             "Data.Argonaut.Parser": "docs/Data/Argonaut/Parser.md",
-            "Data.Argonaut.Printer": "docs/Data/Argonaut/Printer.md"
+            "Data.Argonaut.Printer": "docs/Data/Argonaut/Printer.md",
+            "Data.Argonaut.Prisms": "docs/Data/Argonaut/Prisms.md",
+            "Data.Argonaut.Traversals": "docs/Data/Argonaut/Traversals.md"
         }
     });
 });

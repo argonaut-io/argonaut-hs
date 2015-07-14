@@ -31,22 +31,4 @@ instance decodeMap :: (Ord a, DecodeJson a, DecodeJson b) => DecodeJson (Map a b
 decodeMaybe :: forall a. (DecodeJson a) => Json -> Maybe a
 ```
 
-#### `decodeL`
-
-``` purescript
-decodeL :: forall a. (DecodeJson a, EncodeJson a) => PrismP Json a
-```
-
-#### `arrayIndexL`
-
-``` purescript
-arrayIndexL :: forall a. (DecodeJson a, EncodeJson a) => Int -> TraversalP Json a
-```
-
-#### `objectFieldL`
-
-``` purescript
-objectFieldL :: forall a. (DecodeJson a, EncodeJson a) => JString -> TraversalP Json a
-```
-
 
