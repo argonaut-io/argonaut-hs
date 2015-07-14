@@ -46,7 +46,7 @@ data JNull :: *
 ``` purescript
 instance eqJNull :: Eq JNull
 instance ordJNull :: Ord JNull
-instance showJsonNull :: Show JNull
+instance showJNull :: Show JNull
 ```
 
 #### `Json`
@@ -57,9 +57,9 @@ data Json :: *
 
 ##### Instances
 ``` purescript
-instance showJson :: Show Json
 instance eqJson :: Eq Json
 instance ordJson :: Ord Json
+instance showJson :: Show Json
 ```
 
 #### `foldJson`
@@ -102,12 +102,6 @@ foldJsonArray :: forall a. a -> (JArray -> a) -> Json -> a
 
 ``` purescript
 foldJsonObject :: forall a. a -> (JObject -> a) -> Json -> a
-```
-
-#### `isJsonType`
-
-``` purescript
-isJsonType :: forall a. (Boolean -> (a -> Boolean) -> Json -> Boolean) -> Json -> Boolean
 ```
 
 #### `isNull`
@@ -218,6 +212,12 @@ fromArray :: JArray -> Json
 fromObject :: JObject -> Json
 ```
 
+#### `jsonNull`
+
+``` purescript
+jsonNull :: Json
+```
+
 #### `jsonTrue`
 
 ``` purescript
@@ -234,18 +234,6 @@ jsonFalse :: Json
 
 ``` purescript
 jsonZero :: Json
-```
-
-#### `jsonNull`
-
-``` purescript
-jsonNull :: Json
-```
-
-#### `jsonEmptyString`
-
-``` purescript
-jsonEmptyString :: Json
 ```
 
 #### `jsonEmptyArray`
@@ -270,78 +258,6 @@ jsonSingletonArray :: Json -> Json
 
 ``` purescript
 jsonSingletonObject :: String -> Json -> Json
-```
-
-#### `nullL`
-
-``` purescript
-nullL :: PrismP Json JNull
-```
-
-#### `booleanL`
-
-``` purescript
-booleanL :: PrismP Json JBoolean
-```
-
-#### `numberL`
-
-``` purescript
-numberL :: PrismP Json JNumber
-```
-
-#### `stringL`
-
-``` purescript
-stringL :: PrismP Json JString
-```
-
-#### `arrayL`
-
-``` purescript
-arrayL :: PrismP Json JArray
-```
-
-#### `objectL`
-
-``` purescript
-objectL :: PrismP Json JObject
-```
-
-#### `jsonNullL`
-
-``` purescript
-jsonNullL :: TraversalP Json Json
-```
-
-#### `jsonBooleanL`
-
-``` purescript
-jsonBooleanL :: TraversalP Json Json
-```
-
-#### `jsonNumberL`
-
-``` purescript
-jsonNumberL :: TraversalP Json Json
-```
-
-#### `jsonStringL`
-
-``` purescript
-jsonStringL :: TraversalP Json Json
-```
-
-#### `jsonArrayL`
-
-``` purescript
-jsonArrayL :: TraversalP Json Json
-```
-
-#### `jsonObjectL`
-
-``` purescript
-jsonObjectL :: TraversalP Json Json
 ```
 
 

@@ -38,6 +38,12 @@ instance showJsonPrim :: Show JsonPrim
 runJsonPrim :: JsonPrim -> (forall a. (JNull -> a) -> (JBoolean -> a) -> (JNumber -> a) -> (JString -> a) -> a)
 ```
 
+#### `exactNull`
+
+``` purescript
+exactNull :: JNull
+```
+
 #### `primNull`
 
 ``` purescript
@@ -92,6 +98,12 @@ downIndex :: Int -> JCursor -> JCursor
 cursorGet :: JCursor -> Json -> Maybe Json
 ```
 
+#### `inferEmpty`
+
+``` purescript
+inferEmpty :: JCursor -> Json
+```
+
 #### `cursorSet`
 
 ``` purescript
@@ -108,6 +120,12 @@ toPrims :: Json -> List (Tuple JCursor JsonPrim)
 
 ``` purescript
 fromPrims :: List (Tuple JCursor JsonPrim) -> Maybe Json
+```
+
+#### `fail`
+
+``` purescript
+fail :: forall a b. (Show a) => a -> Either String b
 ```
 
 
