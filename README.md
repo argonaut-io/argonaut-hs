@@ -4,9 +4,9 @@
 
 ## Deprecated
 
-This library have been splitted to
+This library have been split to
 
-- __purescript-argonaut-core__ - basic parsing, printing, folding and types for `JSON`
-- __purescript-argonaut-traversals__ - `JCursor`, prisms and traversals for `JSON`
-- __purescript-argonaut-codecs__ - `EncodeJson` and `DecodeJson` classes, their instances
+- [purescript-argonaut-core](https://github.com/purescript-contrib/purescript-argonaut-core) - basic parsing, printing, folding and types for `JSON`
+- [purescript-argonaut-traversals](https://github.com/purescript-contrib/purescript-argonaut-traversals) - `JCursor`, prisms and traversals for `JSON`
+- [purescript-argonaut-codecs](https://github.com/purescript-contrib/purescript-argonaut-codecs) - `EncodeJson` and `DecodeJson` classes, their instances
 
