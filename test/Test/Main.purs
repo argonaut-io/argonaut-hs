@@ -8,13 +8,15 @@ import Data.Argonaut.Core (Json())
 import Data.Either
 import Data.Tuple
 import Data.Maybe
-import Data.Array 
+import Data.Array
 import Data.List (toList)
 import Control.Monad.Eff.Console
 import qualified Data.StrMap as M
 
 import Test.StrongCheck
 import Test.StrongCheck.Gen
+
+newtype TestJson = TestJson Json
 
 genJNull :: Gen Json
 genJNull = pure jsonNull
@@ -48,30 +50,38 @@ genJson n = frequency (Tuple 1.0 genJNull) rest where
                  Tuple 1.0 (genJArray n),
                  Tuple 1.0 (genJObject n)]
 
-instance arbitraryJson :: Arbitrary Json where
-  arbitrary = sized genJson
 
-prop_encode_then_decode :: Json -> Boolean
-prop_encode_then_decode json =
+instance arbitraryJson :: Arbitrary TestJson where
+  arbitrary = TestJson <$> sized genJson
+
+prop_encode_then_decode :: TestJson -> Boolean
+prop_encode_then_decode (TestJson json) =
   Right json == (decodeJson $ encodeJson $ json)
 
-prop_decode_then_encode :: Json -> Boolean
-prop_decode_then_encode json =
+prop_decode_then_encode :: TestJson -> Boolean
+prop_decode_then_encode (TestJson json) =
   let decoded = (decodeJson json) :: Either String Json in
   Right json == (decoded >>= (encodeJson >>> pure))
 
-prop_toPrims_fromPrims :: Json -> Result
-prop_toPrims_fromPrims j = Just j == fromPrims (toPrims j) <?> "fromPrims.toPrims: " ++ show (toPrims j) ++ "\n\n" ++ show (fromPrims (toPrims j))
+prop_toPrims_fromPrims :: TestJson -> Result
+prop_toPrims_fromPrims (TestJson j) =
+  Just j == fromPrims (toPrims j) <?> "fromPrims.toPrims: " ++ show (toPrims j) ++ "\n\n" ++ show (fromPrims (toPrims j))
 
-instance arbJCursor :: Arbitrary JCursor where
-  arbitrary =  do i <- chooseInt 0.0 2.0
-                  r <- if i == 0 then pure JCursorTop 
-                       else if i == 1 then JField <$> arbitrary <*> arbitrary
-                            else JIndex <$> arbitrary <*> arbitrary
-                  return r 
+newtype TestJCursor = TestJCursor JCursor
 
-prop_jcursor_serialization :: JCursor -> Result
-prop_jcursor_serialization c = 
+runTestJCursor :: TestJCursor -> JCursor
+runTestJCursor (TestJCursor j) = j
+
+instance arbJCursor :: Arbitrary TestJCursor where
+  arbitrary = do
+    i <- chooseInt 0.0 2.0
+    r <- if i == 0 then pure JCursorTop
+         else if i == 1 then JField <$> arbitrary <*> (runTestJCursor <$> arbitrary)
+              else JIndex <$> arbitrary <*> (runTestJCursor <$> arbitrary)
+    return $ TestJCursor r
+
+prop_jcursor_serialization :: TestJCursor -> Result
+prop_jcursor_serialization (TestJCursor c) =
   (decodeJson (encodeJson c) == Right c) <?> "JCursor: " ++ show c
 
 main = do
@@ -91,6 +101,5 @@ main = do
   quickCheck' 20 prop_jcursor_serialization
 
   log "Testing .? combinator"
-  assert $  let bar = fromString "bar" 
-            in  (M.singleton "foo" bar) .? "foo" == Right bar
-
+  assert $ let bar = fromString "bar"
+           in  (M.singleton "foo" bar) .? "foo" == Right bar
