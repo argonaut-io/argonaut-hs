@@ -5,6 +5,10 @@
     "Hardy Jones <>",
     "John A. De Goes <john@degoes.net>"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/purescript-contrib/purescript-argonaut.git"
+  },
   "license": "MIT",
   "dependencies": {
     "purescript-argonaut-traversals": "^0.7.0",
