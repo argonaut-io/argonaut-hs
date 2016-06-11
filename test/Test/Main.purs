@@ -2,19 +2,21 @@ module Test.Main where
 
 import Prelude
 
-import Data.Argonaut
-import Data.Argonaut.JCursor
-import Data.Argonaut.Core (Json())
-import Data.Either
-import Data.Tuple
-import Data.Maybe
-import Data.Array
-import Data.List (toList)
-import Control.Monad.Eff.Console
-import qualified Data.StrMap as M
+import Control.Monad.Eff.Console (log)
 
-import Test.StrongCheck
-import Test.StrongCheck.Gen
+import Data.Argonaut (Json, fromString, encodeJson, decodeJson, fromObject, fromArray, fromNumber, fromBoolean, jsonNull, (.?))
+import Data.Argonaut.JCursor (JCursor(..), toPrims, fromPrims)
+import Data.Array (zipWith, nubBy, length)
+import Data.Either (Either(..))
+import Data.List (fromFoldable)
+import Data.Maybe (Maybe(..))
+import Data.StrMap as M
+import Data.Tuple (Tuple(..), fst)
+
+import Test.StrongCheck (SC, Result, assert, quickCheck', (<?>))
+import Test.StrongCheck.Arbitrary (class Arbitrary, arbitrary)
+import Test.StrongCheck.Data.AlphaNumString (AlphaNumString(..))
+import Test.StrongCheck.Gen (Gen, Size, showSample, chooseInt, sized, frequency, oneOf, vectorOf)
 
 newtype TestJson = TestJson Json
 
@@ -37,14 +39,15 @@ genJObject :: Size -> Gen Json
 genJObject sz = do
   v <- vectorOf sz (genJson $ sz - 1)
   k <- vectorOf (length v) (arbitrary :: Gen AlphaNumString)
-  return $  let f (AlphaNumString s) = s ++ "x"
-                k' = f <$> k
-            in  fromObject <<< M.fromList <<< toList <<< nubBy (\a b -> (fst a) == (fst b)) $ zipWith Tuple k' v
+  let
+    f (AlphaNumString s) = s <> "x"
+    k' = f <$> k
+  pure $ fromObject <<< M.fromList <<< fromFoldable <<< nubBy (\a b -> (fst a) == (fst b)) $ zipWith Tuple k' v
 
 genJson :: Size -> Gen Json
 genJson 0 = oneOf genJNull [genJBool, genJNumber, genJString]
 genJson n = frequency (Tuple 1.0 genJNull) rest where
-  rest = toList [Tuple 2.0 genJBool,
+  rest = fromFoldable [Tuple 2.0 genJBool,
                  Tuple 2.0 genJNumber,
                  Tuple 3.0 genJString,
                  Tuple 1.0 (genJArray n),
@@ -65,7 +68,7 @@ prop_decode_then_encode (TestJson json) =
 
 prop_toPrims_fromPrims :: TestJson -> Result
 prop_toPrims_fromPrims (TestJson j) =
-  Just j == fromPrims (toPrims j) <?> "fromPrims.toPrims: " ++ show (toPrims j) ++ "\n\n" ++ show (fromPrims (toPrims j))
+  Just j == fromPrims (toPrims j) <?> "fromPrims.toPrims: " <> show (toPrims j) <> "\n\n" <> show (fromPrims (toPrims j))
 
 newtype TestJCursor = TestJCursor JCursor
 
@@ -78,12 +81,13 @@ instance arbJCursor :: Arbitrary TestJCursor where
     r <- if i == 0 then pure JCursorTop
          else if i == 1 then JField <$> arbitrary <*> (runTestJCursor <$> arbitrary)
               else JIndex <$> arbitrary <*> (runTestJCursor <$> arbitrary)
-    return $ TestJCursor r
+    pure $ TestJCursor r
 
 prop_jcursor_serialization :: TestJCursor -> Result
 prop_jcursor_serialization (TestJCursor c) =
-  (decodeJson (encodeJson c) == Right c) <?> "JCursor: " ++ show c
+  (decodeJson (encodeJson c) == Right c) <?> "JCursor: " <> show c
 
+main :: SC () Unit
 main = do
   log "Showing small sample of JSON"
   showSample (genJson 10)
