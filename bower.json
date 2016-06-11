@@ -1,6 +1,6 @@
 {
   "name": "purescript-argonaut",
-  "description": "PureScript version of Argonaut",
+  "description": "PureScript's implementation of Argonaut",
   "authors": [
     "Hardy Jones <>",
     "John A. De Goes <john@degoes.net>"
@@ -11,12 +11,12 @@
   },
   "license": "MIT",
   "dependencies": {
-    "purescript-argonaut-traversals": "^0.7.0",
-    "purescript-argonaut-core": "^0.2.1",
-    "purescript-argonaut-codecs": "^0.6.0"
+    "purescript-argonaut-codecs": "^1.0.0",
+    "purescript-argonaut-core": "^1.0.0",
+    "purescript-argonaut-traversals": "^1.0.0"
   },
   "devDependencies": {
-    "purescript-console": "^0.1.0",
-    "purescript-strongcheck": "^0.14.3"
+    "purescript-console": "^1.0.0",
+    "purescript-strongcheck": "^1.1.1"
   }
 }
