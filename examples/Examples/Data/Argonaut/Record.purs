@@ -2,38 +2,38 @@ module Examples.Data.Argonaut.Record where
 
 import Prelude
 
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Console (CONSOLE, logShow)
+import Data.Argonaut (class EncodeJson, class DecodeJson, Json, encodeJson, fromArray, decodeJson, jsonEmptyObject, (~>), (:=), (.?))
+import Data.Either (Either)
+import Data.Traversable (traverse)
 
-import Data.Argonaut (class EncodeJson, class DecodeJson, encodeJson, printJson, jsonEmptyObject, decodeJson, (~>), (:=), (.?))
-import Data.Maybe (Maybe(..))
-
-newtype Foo = Foo
-  { foo :: Maybe Int
-  , bar :: Maybe String
+newtype BlogPost = BlogPost
+  { id :: Int
+  , title :: String
+  , categories :: String
+  , content :: String
   }
 
-instance decodeJsonFoo :: DecodeJson Foo where
+instance decodeJsonBlogPost :: DecodeJson BlogPost where
   decodeJson json = do
     obj <- decodeJson json
-    foo <- obj .? "foo"
-    bar <- obj .? "bar"
-    pure $ Foo { foo, bar}
+    id <- obj .? "id"
+    title <- obj .? "title"
+    categories <- obj .? "categories"
+    content <- obj .? "content"
+    pure $ BlogPost { id, title, categories, content }
 
-instance encodeJsonFoo :: EncodeJson Foo where
-  encodeJson (Foo { foo, bar })
-    =  "bar" := bar
-    ~> "foo" := foo
+instance encodeJson :: EncodeJson BlogPost where
+  encodeJson (BlogPost post)
+     = "id" := post.id
+    ~> "title" := post.title
+    ~> "categories" := post.categories
+    ~> "content" := post.content
     ~> jsonEmptyObject
 
-instance showFoo :: Show Foo where
-  show (Foo { foo, bar }) =
-    "Foo { foo: " <> show foo <> ", bar: " <> show bar <> " }"
+type BlogPostArray = Array BlogPost
 
-main :: Eff (console :: CONSOLE) Unit
-main = do
-  logShow $ "raw foo is: " <> show foo
-  logShow $ "encoded foo is: " <> printJson (encodeJson foo)
-  where
-  foo :: Foo
-  foo = Foo { foo: Just 42, bar: Nothing }
+decodeBlogPostArray :: Json -> Either String BlogPostArray
+decodeBlogPostArray json = decodeJson json >>= traverse decodeJson
+
+encodeBlogPostArray :: BlogPostArray -> Json
+encodeBlogPostArray bpa = fromArray $ encodeJson <$> bpa
