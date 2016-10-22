@@ -42,7 +42,7 @@ genJObject sz = do
   let
     f (AlphaNumString s) = s <> "x"
     k' = f <$> k
-  pure $ fromObject <<< M.fromList <<< fromFoldable <<< nubBy (\a b -> (fst a) == (fst b)) $ zipWith Tuple k' v
+  pure $ fromObject <<< M.fromFoldable <<< nubBy (\a b -> (fst a) == (fst b)) $ zipWith Tuple k' v
 
 genJson :: Size -> Gen Json
 genJson 0 = oneOf genJNull [genJBool, genJNumber, genJString]
@@ -77,7 +77,7 @@ runTestJCursor (TestJCursor j) = j
 
 instance arbJCursor :: Arbitrary TestJCursor where
   arbitrary = do
-    i <- chooseInt 0.0 2.0
+    i <- chooseInt 0 2
     r <- if i == 0 then pure JCursorTop
          else if i == 1 then JField <$> arbitrary <*> (runTestJCursor <$> arbitrary)
               else JIndex <$> arbitrary <*> (runTestJCursor <$> arbitrary)
