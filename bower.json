@@ -11,12 +11,12 @@
   },
   "license": "MIT",
   "dependencies": {
-    "purescript-argonaut-codecs": "^1.0.0",
-    "purescript-argonaut-core": "^1.0.0",
-    "purescript-argonaut-traversals": "^1.0.0"
+    "purescript-argonaut-codecs": "^2.0.0",
+    "purescript-argonaut-core": "^2.0.0",
+    "purescript-argonaut-traversals": "^2.0.0"
   },
   "devDependencies": {
-    "purescript-console": "^1.0.0",
-    "purescript-strongcheck": "^1.1.1"
+    "purescript-console": "^2.0.0",
+    "purescript-strongcheck": "^2.0.0"
   }
 }
