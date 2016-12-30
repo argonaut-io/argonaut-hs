@@ -22,7 +22,7 @@ instance decodeJsonBlogPost :: DecodeJson BlogPost where
     content <- obj .? "content"
     pure $ BlogPost { id, title, categories, content }
 
-instance encodeJson :: EncodeJson BlogPost where
+instance encodeJsonBlogPost :: EncodeJson BlogPost where
   encodeJson (BlogPost post)
      = "id" := post.id
     ~> "title" := post.title
