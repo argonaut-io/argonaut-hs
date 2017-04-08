@@ -4,58 +4,21 @@ import Prelude
 
 import Control.Monad.Eff.Console (log)
 
-import Data.Argonaut (Json, fromString, encodeJson, decodeJson, fromObject, fromArray, fromNumber, fromBoolean, jsonNull, (.?))
+import Data.Argonaut (Json, decodeJson, encodeJson, fromString, (.?))
 import Data.Argonaut.JCursor (JCursor(..), toPrims, fromPrims)
-import Data.Array (zipWith, nubBy, length)
+import Data.Argonaut.Gen (genJson)
 import Data.Either (Either(..))
-import Data.List (fromFoldable)
 import Data.Maybe (Maybe(..))
 import Data.StrMap as M
-import Data.Tuple (Tuple(..), fst)
 
 import Test.StrongCheck (SC, Result, assert, quickCheck', (<?>))
 import Test.StrongCheck.Arbitrary (class Arbitrary, arbitrary)
-import Test.StrongCheck.Data.AlphaNumString (AlphaNumString(..))
-import Test.StrongCheck.Gen (Gen, Size, showSample, chooseInt, sized, frequency, oneOf, vectorOf)
+import Test.StrongCheck.Gen (chooseInt, resize)
 
 newtype TestJson = TestJson Json
 
-genJNull :: Gen Json
-genJNull = pure jsonNull
-
-genJBool :: Gen Json
-genJBool = fromBoolean <$> arbitrary
-
-genJNumber :: Gen Json
-genJNumber = fromNumber <$> arbitrary
-
-genJString :: Gen Json
-genJString = fromString <$> arbitrary
-
-genJArray :: Size -> Gen Json
-genJArray sz = fromArray <$> vectorOf sz (genJson $ sz - 1)
-
-genJObject :: Size -> Gen Json
-genJObject sz = do
-  v <- vectorOf sz (genJson $ sz - 1)
-  k <- vectorOf (length v) (arbitrary :: Gen AlphaNumString)
-  let
-    f (AlphaNumString s) = s <> "x"
-    k' = f <$> k
-  pure $ fromObject <<< M.fromFoldable <<< nubBy (\a b -> (fst a) == (fst b)) $ zipWith Tuple k' v
-
-genJson :: Size -> Gen Json
-genJson 0 = oneOf genJNull [genJBool, genJNumber, genJString]
-genJson n = frequency (Tuple 1.0 genJNull) rest where
-  rest = fromFoldable [Tuple 2.0 genJBool,
-                 Tuple 2.0 genJNumber,
-                 Tuple 3.0 genJString,
-                 Tuple 1.0 (genJArray n),
-                 Tuple 1.0 (genJObject n)]
-
-
 instance arbitraryJson :: Arbitrary TestJson where
-  arbitrary = TestJson <$> sized genJson
+  arbitrary = TestJson <$> (resize 5 genJson)
 
 prop_encode_then_decode :: TestJson -> Boolean
 prop_encode_then_decode (TestJson json) =
@@ -89,9 +52,6 @@ prop_jcursor_serialization (TestJCursor c) =
 
 main :: SC () Unit
 main = do
-  log "Showing small sample of JSON"
-  showSample (genJson 10)
-
   log "Testing that any JSON can be encoded and then decoded"
   quickCheck' 20 prop_encode_then_decode
 
