@@ -2,16 +2,16 @@ module Test.Main where
 
 import Prelude
 
-import Control.Monad.Eff.Console (log)
-
-import Data.Argonaut (Json, decodeJson, encodeJson, fromString, (.?))
-import Data.Argonaut.JCursor (JCursor(..), toPrims, fromPrims)
+import Data.Argonaut (Json, decodeJson, encodeJson, fromString, (.?), stringify)
 import Data.Argonaut.Gen (genJson)
+import Data.Argonaut.JCursor (JCursor(..), toPrims, fromPrims)
+import Data.Foldable (foldMap)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Data.StrMap as M
-
-import Test.StrongCheck (SC, Result, assert, quickCheck', (<?>))
+import Effect (Effect)
+import Effect.Console (log)
+import Foreign.Object as FO
+import Test.StrongCheck (Result, assert, quickCheck', (<?>))
 import Test.StrongCheck.Arbitrary (class Arbitrary, arbitrary)
 import Test.StrongCheck.Gen (chooseInt, resize)
 
@@ -31,7 +31,7 @@ prop_decode_then_encode (TestJson json) =
 
 prop_toPrims_fromPrims :: TestJson -> Result
 prop_toPrims_fromPrims (TestJson j) =
-  Just j == fromPrims (toPrims j) <?> "fromPrims.toPrims: " <> show (toPrims j) <> "\n\n" <> show (fromPrims (toPrims j))
+  Just j == fromPrims (toPrims j) <?> "fromPrims.toPrims: " <> show (toPrims j) <> "\n\n" <> foldMap stringify (fromPrims (toPrims j))
 
 newtype TestJCursor = TestJCursor JCursor
 
@@ -50,7 +50,7 @@ prop_jcursor_serialization :: TestJCursor -> Result
 prop_jcursor_serialization (TestJCursor c) =
   (decodeJson (encodeJson c) == Right c) <?> "JCursor: " <> show c
 
-main :: SC () Unit
+main :: Effect Unit
 main = do
   log "Testing that any JSON can be encoded and then decoded"
   quickCheck' 20 prop_encode_then_decode
@@ -66,4 +66,4 @@ main = do
 
   log "Testing .? combinator"
   assert $ let bar = fromString "bar"
-           in  (M.singleton "foo" bar) .? "foo" == Right bar
+           in  (FO.singleton "foo" bar) .? "foo" == Right bar
