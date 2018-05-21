@@ -11,9 +11,9 @@
   },
   "license": "MIT",
   "dependencies": {
-    "purescript-argonaut-codecs": "cryogenian/purescript-argonaut-codecs#compiler/0.12",
+    "purescript-argonaut-codecs": "#compiler/0.12",
     "purescript-argonaut-core": "#compiler/0.12",
-    "purescript-argonaut-traversals": "cryogenian/purescript-argonaut-traversals#compiler/0.12"
+    "purescript-argonaut-traversals": "#compiler/0.12"
   },
   "devDependencies": {
     "purescript-console": "#compiler/0.12",
