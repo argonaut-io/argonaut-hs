@@ -1,8 +1,10 @@
 # purescript-argonaut
 
-[![Latest release](http://img.shields.io/github/release/purescript-contrib/purescript-argonaut.svg)](https://github.com/purescript-contrib/purescript-argonaut/releases)
+[![Latest Release](http://img.shields.io/github/release/purescript-contrib/purescript-argonaut.svg)](https://github.com/purescript-contrib/purescript-argonaut/releases)
 [![Build Status](https://travis-ci.org/purescript-contrib/purescript-argonaut.svg)](https://travis-ci.org/purescript-contrib/purescript-argonaut)
-[![Maintainer: slamdata](https://img.shields.io/badge/maintainer-slamdata-lightgrey.svg)](http://github.com/slamdata)
+[![Pursuit](http://pursuit.purescript.org/packages/purescript-argonaut/badge)](http://pursuit.purescript.org/packages/purescript-argonaut/)
+[![Maintainer: garyb](https://img.shields.io/badge/maintainer-garyb-lightgrey.svg)](http://github.com/garyb)
+[![Maintainer: thomashoneyman](https://img.shields.io/badge/maintainer-thomashoneyman-lightgrey.svg)](http://github.com/thomashoneyman)
 
 Go to [purescript-argonaut-core/README.md](https://github.com/purescript-contrib/purescript-argonaut-core/blob/master/README.md) to read an overview of Argonaut and how to use it.
 
