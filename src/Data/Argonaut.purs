@@ -9,7 +9,7 @@ module Data.Argonaut
   ) where
 
 import Data.Argonaut.Core (Json, caseJson, caseJsonArray, caseJsonBoolean, caseJsonNull, caseJsonNumber, caseJsonObject, caseJsonString, fromArray, fromBoolean, fromNumber, fromObject, fromString, isArray, isBoolean, isNull, isNumber, isObject, isString, jsonEmptyArray, jsonEmptyObject, jsonEmptyString, jsonFalse, jsonNull, jsonSingletonArray, jsonSingletonObject, jsonTrue, jsonZero, stringify, toArray, toBoolean, toNull, toNumber, toObject, toString)
-import Data.Argonaut.Decode (class DecodeJson, decodeJson, defaultField, parseField, parseFieldOptional, parseFieldOptional', (.:), (.!=), (.:?), (.:!))
+import Data.Argonaut.Decode (class DecodeJson, decodeJson, defaultField, getField, getFieldDeprecated, getFieldOptional, getFieldOptionalDeprecated, getFieldOptional', defaultField, defaultFieldDeprecated, (.:), (.?), (.:!), (.:?), (.??), (.!=), (.?=))
 import Data.Argonaut.Encode (class EncodeJson, assoc, encodeJson, extend, (:=), (~>))
 import Data.Argonaut.JCursor (JCursor(..), JsonPrim(..), cursorGet, cursorSet, downField, downIndex, fail, fromPrims, inferEmpty, insideOut, primBool, primNull, primNum, primStr, primToJson, runJsonPrim, toPrims)
 import Data.Argonaut.Parser (jsonParser)
