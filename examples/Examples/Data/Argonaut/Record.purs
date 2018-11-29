@@ -20,7 +20,7 @@ instance decodeJsonBlogPost :: DecodeJson BlogPost where
     id <- obj .: "id"
     title <- obj .: "title"
     content <- obj .: "content"
-    publishDate <- .:? "publish_date"
+    publishDate <- obj .:? "publish_date"
     categories <- obj .:? "categories" .!= ""
     pure $ BlogPost { id, title, content, publishDate, content }
 
