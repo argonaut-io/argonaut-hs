@@ -4,6 +4,7 @@ import Prelude
 
 import Data.Argonaut (class EncodeJson, class DecodeJson, Json, encodeJson, fromArray, decodeJson, jsonEmptyObject, (~>), (~>?), (:=), (:=?), (.:), (.:?), (.!=))
 import Data.Either (Either)
+import Data.Maybe (Maybe)
 import Data.Traversable (traverse)
 
 newtype BlogPost = BlogPost
@@ -22,7 +23,7 @@ instance decodeJsonBlogPost :: DecodeJson BlogPost where
     content <- obj .: "content"
     publishDate <- obj .:? "publish_date"
     categories <- obj .:? "categories" .!= ""
-    pure $ BlogPost { id, title, content, publishDate, content }
+    pure $ BlogPost { id, title, content, publishDate, categories }
 
 instance encodeJsonBlogPost :: EncodeJson BlogPost where
   encodeJson (BlogPost post)
