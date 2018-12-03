@@ -11,7 +11,7 @@ Go to [purescript-argonaut-core/README.md](https://github.com/purescript-contrib
 This library bundles together the following:
 
 - [purescript-argonaut-core](https://github.com/purescript-contrib/purescript-argonaut-core) - basic parsing, printing, folding and types for `Json`
-- [purescript-argonaut-codecs](https://github.com/purescript-contrib/purescript-argonaut-codecs) - `EncodeJson` and `DecodeJson` classes, their instances
+- [purescript-argonaut-codecs](https://github.com/purescript-contrib/purescript-argonaut-codecs) - `EncodeJson` and `DecodeJson` classes, their instances, and helper functions
 - [purescript-argonaut-traversals](https://github.com/purescript-contrib/purescript-argonaut-traversals) - `JCursor`, prisms and traversals for `Json`
 
 ## Contributing
