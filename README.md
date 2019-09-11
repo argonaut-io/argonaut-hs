@@ -6,13 +6,30 @@
 [![Maintainer: garyb](https://img.shields.io/badge/maintainer-garyb-lightgrey.svg)](http://github.com/garyb)
 [![Maintainer: thomashoneyman](https://img.shields.io/badge/maintainer-thomashoneyman-lightgrey.svg)](http://github.com/thomashoneyman)
 
-Go to [purescript-argonaut-core/README.md](https://github.com/purescript-contrib/purescript-argonaut-core/blob/master/README.md) to read an overview of Argonaut and how to use it.
+[Argonaut](https://github.com/purescript-contrib/purescript-argonaut) is a collection of libraries for working with JSON in PureScript. This library bundles together the following:
 
-This library bundles together the following:
+- [purescript-argonaut-core](https://github.com/purescript-contrib/purescript-argonaut-core) provides basic parsing, printing, folding and types for `Json`.
+- [purescript-argonaut-codecs](https://github.com/purescript-contrib/purescript-argonaut-codecs) provides codecs based on `EncodeJson` and `DecodeJson` type classes (along with instances for common data types) and combinators for encoding and decoding `Json` values.
+- [purescript-argonaut-traversals](https://github.com/purescript-contrib/purescript-argonaut-traversals) defines prisms, traversals, zippers, and `JCursor` for the `Json` type.
 
-- [purescript-argonaut-core](https://github.com/purescript-contrib/purescript-argonaut-core) - basic parsing, printing, folding and types for `Json`
-- [purescript-argonaut-codecs](https://github.com/purescript-contrib/purescript-argonaut-codecs) - `EncodeJson` and `DecodeJson` classes, their instances, and helper functions
-- [purescript-argonaut-traversals](https://github.com/purescript-contrib/purescript-argonaut-traversals) - `JCursor`, prisms and traversals for `Json`
+## Installation
+
+```sh
+# with Spago
+spago install argonaut
+
+# with Bower
+bower install purescript-argonaut
+```
+
+## Documentation
+
+Module documentation is [published on Pursuit](https://pursuit.purescript.org/packages/purescript-argonaut). 
+
+- To learn more about Argonaut, its basic data types, and its approach to JSON, see [purescript-argonaut-core](https://github.com/purescript-contrib/purescript-argonaut-core).
+- To learn more about encoding and decoding PureScript types to and from `Json`, see [purescript-argonaut-codecs](https://github.com/purescript-contrib/purescript-argonaut-codecs).
+- To learn more about manipulating `Json` using optics and `JCursor`, see [purescript-argonaut-traversals](https://github.com/purescript-contrib/purescript-argonaut-traversals)
+
 
 ## Contributing
 
