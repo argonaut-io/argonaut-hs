@@ -2,7 +2,7 @@ module Examples.Data.Argonaut.Record where
 
 import Prelude
 
-import Data.Argonaut (class EncodeJson, class DecodeJson, Json, encodeJson, fromArray, decodeJson, jsonEmptyObject, (~>), (~>?), (:=), (:=?), (.:), (.:?), (.!=))
+import Data.Argonaut (class DecodeJson, class EncodeJson, Json, JsonDecodeError, decodeJson, encodeJson, fromArray, jsonEmptyObject, (.!=), (.:), (.:?), (:=), (:=?), (~>), (~>?))
 import Data.Either (Either)
 import Data.Maybe (Maybe)
 import Data.Traversable (traverse)
@@ -36,7 +36,7 @@ instance encodeJsonBlogPost :: EncodeJson BlogPost where
 
 type BlogPostArray = Array BlogPost
 
-decodeBlogPostArray :: Json -> Either String BlogPostArray
+decodeBlogPostArray :: Json -> Either JsonDecodeError BlogPostArray
 decodeBlogPostArray json = decodeJson json >>= traverse decodeJson
 
 encodeBlogPostArray :: BlogPostArray -> Json
