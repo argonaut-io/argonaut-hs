@@ -12,6 +12,8 @@ Bugfixes:
 
 Other improvements:
 
+- Re-exported `Data.Argonaut.Core.stringifyWithIndent`.
+
 ## [v7.0.0](https://github.com/purescript-contrib/purescript-argonaut/releases/tag/v7.0.0) - 2020-06-20
 
 Updates dependencies to account for the [typed errors introduced in `argonaut-codecs` v7.0.0](https://github.com/purescript-contrib/purescript-argonaut-codecs/releases/tag/v7.0.0). These types produce richer information to understand errors that have occurred, which can also be printed as human-readable errors.
