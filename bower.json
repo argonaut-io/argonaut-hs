@@ -7,16 +7,17 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/purescript-contrib/purescript-argonaut.git"
+    "url": "https://github.com/purescript-contrib/purescript-argonaut.git"
   },
   "license": "MIT",
   "dependencies": {
-    "purescript-argonaut-codecs": "^7.0.0",
-    "purescript-argonaut-core": "^5.1.0",
-    "purescript-argonaut-traversals": "^8.0.0"
+    "purescript-argonaut-codecs": "^8.0.0",
+    "purescript-argonaut-core": "^6.0.0",
+    "purescript-argonaut-traversals": "^9.0.0"
   },
   "devDependencies": {
-    "purescript-console": "^4.0.0",
-    "purescript-quickcheck": "^6.0.0"
+    "purescript-console": "^5.0.0",
+    "purescript-effect": "^3.0.0",
+    "purescript-quickcheck": "^7.0.0"
   }
 }
