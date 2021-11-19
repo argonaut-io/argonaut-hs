@@ -8,7 +8,6 @@ module Data.Argonaut
   , module Data.Argonaut.Traversals
   ) where
 
-
 import Data.Argonaut.Core (Json, caseJson, caseJsonArray, caseJsonBoolean, caseJsonNull, caseJsonNumber, caseJsonObject, caseJsonString, fromArray, fromBoolean, fromNumber, fromObject, fromString, isArray, isBoolean, isNull, isNumber, isObject, isString, jsonEmptyArray, jsonEmptyObject, jsonEmptyString, jsonFalse, jsonNull, jsonSingletonArray, jsonSingletonObject, jsonTrue, jsonZero, stringify, stringifyWithIndent, toArray, toBoolean, toNull, toNumber, toObject, toString)
 import Data.Argonaut.Decode (class DecodeJson, JsonDecodeError(..), decodeJson, defaultField, getField, getFieldOptional, getFieldOptional', parseJson, printJsonDecodeError, (.!=), (.:), (.:!), (.:?))
 import Data.Argonaut.Encode (class EncodeJson, assoc, assocOptional, encodeJson, extend, extendOptional, (:=), (:=?), (~>), (~>?))

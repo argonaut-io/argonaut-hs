@@ -24,11 +24,12 @@ prop_toPrims_fromPrims = do
 
 genTestJCursor :: Gen JCursor
 genTestJCursor = do
-    i <- chooseInt 0 2
-    r <- if i == 0 then pure JCursorTop
-         else if i == 1 then JField <$> genUnicodeString <*> genTestJCursor
-              else JIndex <$> chooseInt bottom top <*> genTestJCursor
-    pure r
+  i <- chooseInt 0 2
+  r <-
+    if i == 0 then pure JCursorTop
+    else if i == 1 then JField <$> genUnicodeString <*> genTestJCursor
+    else JIndex <$> chooseInt bottom top <*> genTestJCursor
+  pure r
 
 prop_jcursor_serialization :: Gen Result
 prop_jcursor_serialization = do
